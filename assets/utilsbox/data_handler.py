@@ -31,6 +31,7 @@ class DataValidityCheck(object):
         self.asset_obj = None
 
     def data_is_valid(self):
+        """校验数据是否可用"""
         # self.request.data --> QueryDict
         data = self.request.data.get("asset_data")  # unicode
         if data:
@@ -50,13 +51,23 @@ class DataValidityCheck(object):
         return False
 
     def response_msg(self, msg_type, key, msg):
+        """
+        :func  记录响应信息
+        :param msg_type -> 'error' 'info' 'warning'
+        :param key -> error overview
+        :param msg -> error content
+        """
         if msg_type in self.response:
             self.response[msg_type].append({key: msg})
         else:
             raise ValueError
 
-    # 检查必须项
     def mandatory_check(self, data, only_check_sn=False):
+        """
+        :func  检查必须项
+        :param data
+        :param only_check_sn
+        """
         for field in self.mandatory_fields:
             if field not in data:
                 self.response_msg(
@@ -66,24 +77,26 @@ class DataValidityCheck(object):
         else:
             if self.response['error']:
                 return False
-        try:
-            if self.agent_asset_id != 0:  # not new asset
+
+        if self.agent_asset_id != 0:  # not new asset
+            try:
                 if only_check_sn:
                     self.asset_obj = models.Asset.objects.get(sn=data['sn'])
                 else:
                     self.asset_obj = models.Asset.objects.get(id=int(data['asset_id']), sn=data['sn'])
-            else:  # new asset
-                pass
 
-        except ObjectDoesNotExist, e:
-            self.response_msg(
-                'error',
-                'AssetDataInvalid',
-                "Cannot find asset object by asset id [%s] and SN [%s] " % (data['asset_id'], data['sn']))
-            self.waiting_approval = True
-            return False
+            except ObjectDoesNotExist, e:
+                self.response_msg(
+                    'error',
+                    'AssetDataInvalid',
+                    "Cannot find asset object by asset id [%s] and SN [%s] " % (data['asset_id'], data['sn']))
+                self.waiting_approval = True
+                return False
 
     def asset_type_existing(self):
+        """
+        :func  ensure data from agent contains asset_type
+        """
         if not hasattr(self.asset_obj, self.clean_data['asset_type']):
             return True
         else:
@@ -117,19 +130,19 @@ class DataValidityCheck(object):
 class Handler(DataValidityCheck):
     def data_incorporated(self):
         # if data_is_valid return True, then this func will be called.
-        if self.agent_asset_id() == 0:
-            self.create_asset()
+        if self.agent_asset_id == 0:
+            self.create_method()
         else:
-            self.update_asset()
+            self.update_method()
 
     # create new asset (type: server)
-    def create_asset(self):
+    def create_method(self):
         func = getattr(self, '_create_asset_%s' % self.clean_data['asset_type'])
         func()
 
-    # update asset msg
-    def update_asset(self):
-        func = getattr(self, '_update_%s' % self.clean_data['asset_type'])
+    # update asset server
+    def update_method(self):
+        func = getattr(self, '_update_asset_%s_record' % self.clean_data['asset_type'])
         func()
 
     def _create_asset_server(self):
@@ -200,14 +213,17 @@ class Handler(DataValidityCheck):
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [cpu] %s' % str(e))
 
-    def _update_server(self):
+    def _update_asset_server_record(self):
+        """
+        :func  update server record according to　data from agent
+        """
         nic = self.__update_asset_component(
             data_source=self.clean_data['nic'],
             fk='nic_set',
-            update_fields=['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask',
-                           'bonding'],
+            update_fields=['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask', 'bonding'],
             identify_field='macaddress'
         )
+
         disk = self.__update_asset_component(data_source=self.clean_data['physical_disk_driver'],
                                              fk='disk_set',
                                              update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
@@ -223,3 +239,12 @@ class Handler(DataValidityCheck):
         manufactory = self.__update_manufactory_component()
 
         server = self.__update_server_component()
+
+    def __update_server_component(self):
+        update_fields = ['model', 'raid_type', 'os_type', 'os_distribution', 'os_release']
+        if hasattr(self.asset_obj, 'server'):
+            self.__compare_componet(model_obj=self.asset_obj.server,
+                                    fields_from_db=update_fields,
+                                    data_source=self.clean_data)
+        else:
+            self.__create_server_info(ignore_errs=True)

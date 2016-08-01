@@ -61,21 +61,9 @@ class Server(models.Model):
         ('manual', 'Manual'),
     )
     created_by = models.CharField(choices=created_by_choices, max_length=32, default='auto')
-    hosted_on = models.ForeignKey('self', related_name='hosted_on_server', blank=True, null=True)  # for vitural server
-    # sn = models.CharField(u'SN号',max_length=128)
-    # management_ip = models.CharField(u'管理IP',max_length=64,blank=True,null=True)
-    # manufactory = models.ForeignKey(verbose_name=u'制造商',max_length=128,null=True, blank=True)
+    hosted_on = models.ForeignKey('self', related_name='hosted_machine', blank=True, null=True)  # for vitural server
     model = models.CharField(u'型号', max_length=128, null=True, blank=True)
-    # 若有多个CPU，型号应该都是一致的，故没做ForeignKey
-
-    # nic = models.ManyToManyField('NIC', verbose_name=u'网卡列表')
-    # disk
     raid_type = models.CharField(u'raid类型', max_length=512, blank=True, null=True)
-    # physical_disk_driver = models.ManyToManyField('Disk', verbose_name=u'硬盘',blank=True,null=True)
-    # raid_adaptor = models.ManyToManyField('RaidAdaptor', verbose_name=u'Raid卡',blank=True,null=True)
-    # memory
-    # ram_capacity = models.IntegerField(u'内存总大小GB',blank=True)
-    # ram = models.ManyToManyField('Memory', verbose_name=u'内存配置',blank=True,null=True)
 
     os_type = models.CharField(u'操作系统类型', max_length=64, blank=True, null=True)
     os_distribution = models.CharField(u'发型版本', max_length=64, blank=True, null=True)
@@ -87,7 +75,6 @@ class Server(models.Model):
     class Meta:
         verbose_name = '服务器'
         verbose_name_plural = "服务器"
-        # together = ["sn", "asset"]
 
     def __unicode__(self):
         return '%s sn:%s' % (self.asset.name, self.asset.sn)
