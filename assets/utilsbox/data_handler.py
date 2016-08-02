@@ -131,18 +131,18 @@ class Handler(DataValidityCheck):
     def data_incorporated(self):
         # if data_is_valid return True, then this func will be called.
         if self.agent_asset_id == 0:
-            self.create_method()
+            self.create_method(self.clean_data['asset_type'])
         else:
-            self.update_method()
+            self.update_method(self.clean_data['asset_type'])
 
     # create new asset (type: server)
-    def create_method(self):
-        func = getattr(self, '_create_asset_%s' % self.clean_data['asset_type'])
+    def create_method(self, types):
+        func = getattr(self, '_create_asset_%s' % types)
         func()
 
     # update asset server
-    def update_method(self):
-        func = getattr(self, '_update_asset_%s_record' % self.clean_data['asset_type'])
+    def update_method(self, types):
+        func = getattr(self, '_update_asset_%s_record' % types)
         func()
 
     def _create_asset_server(self):
@@ -215,22 +215,22 @@ class Handler(DataValidityCheck):
 
     def _update_asset_server_record(self):
         """
-        :func  update server record according to　data from agent
+        update server record according to　data from agent
         """
-        nic = self.__update_asset_component(
-            data_source=self.clean_data['nic'],
+        self.__update_asset_component(
+            component_data=self.clean_data['nic'],
             fk='nic_set',
             update_fields=['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask', 'bonding'],
             identify_field='macaddress'
         )
 
-        disk = self.__update_asset_component(data_source=self.clean_data['physical_disk_driver'],
+        disk = self.__update_asset_component(component_data=self.clean_data['physical_disk_driver'],
                                              fk='disk_set',
                                              update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
                                                             'iface_type'],
                                              identify_field='slot'
                                              )
-        ram = self.__update_asset_component(data_source=self.clean_data['ram'],
+        ram = self.__update_asset_component(component_data=self.clean_data['ram'],
                                             fk='ram_set',
                                             update_fields=['slot', 'sn', 'model', 'capacity'],
                                             identify_field='slot'
@@ -245,6 +245,68 @@ class Handler(DataValidityCheck):
         if hasattr(self.asset_obj, 'server'):
             self.__compare_componet(model_obj=self.asset_obj.server,
                                     fields_from_db=update_fields,
-                                    data_source=self.clean_data)
+                                    component_data=self.clean_data)
         else:
             self.__create_server_info(ignore_errs=True)
+
+    def __update_asset_component(self, component_data, fk, update_fields, identify_field=None):
+        """
+        component_data: the specified component's data
+        fk: which key to use to find the connection between main Asset obj and each asset component
+        update_fields: what fields in DB will be compared and updated
+        identify_field: identify each component of an Asset , None means only use asset id to identify
+        """
+        print component_data, update_fields, identify_field
+        try:
+            component_obj = getattr(self.asset_obj, fk)
+            if hasattr(component_obj, 'select_related'):  # this component is reverse m2m relation with Asset model
+                objects_from_db = component_obj.select_related()  # 取出这个资产对应的所有网卡信息
+                for obj in objects_from_db:
+                    key_field_data = getattr(obj, identify_field)  # 获取mac....
+                    # use this key_field_data to find the relative data source from reporting data
+                    if type(component_data) is list:
+                        for source_data_item in component_data:
+                            key_field_data_from_source_data = source_data_item.get(identify_field)
+                            if key_field_data_from_source_data:
+                                if key_field_data == key_field_data_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
+                                    self.__compare_componet(model_obj=obj, fields_from_db=update_fields,
+                                                            component_data=source_data_item)
+                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this key_field_data, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
+                            else:  # key field data from source data cannot be none
+                                self.response_msg('warning', 'AssetUpdateWarning',
+                                                  "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
+                                                      fk, identify_field))
+
+                        else:  # couldn't find any matches, the asset component must be broken or changed manually
+                            print '\033[33;1mError:cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!\033[0m' % (
+                                key_field_data)
+                            self.response_msg("error", "AssetUpdateWarning",
+                                              "Cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!" % (
+                                                  key_field_data))
+                    elif type(component_data) is dict:  # dprecated...
+                        for key, source_data_item in component_data.items():
+                            key_field_data_from_source_data = source_data_item.get(identify_field)
+                            if key_field_data_from_source_data:
+                                if key_field_data == key_field_data_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
+                                    self.__compare_componet(model_obj=obj, fields_from_db=update_fields,
+                                                            component_data=source_data_item)
+                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this key_field_data, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
+                            else:  # key field data from source data cannot be none
+                                self.response_msg('warning', 'AssetUpdateWarning',
+                                                  "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
+                                                      fk, identify_field))
+
+                        else:  # couldn't find any matches, the asset component must be broken or changed manually
+                            print '\033[33;1mWarning:cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!\033[0m' % (
+                                key_field_data)
+                    else:
+                        print '\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m'
+                # compare all the components from DB with the data source from reporting data
+                self.__filter_add_or_deleted_components(model_obj_name=component_obj.model._meta.object_name,
+                                                        data_from_db=objects_from_db, component_data=component_data,
+                                                        identify_field=identify_field)
+
+            else:  # this component is reverse fk relation with Asset model
+                pass
+        except ValueError, e:
+            print '\033[41;1m%s\033[0m' % str(e)
