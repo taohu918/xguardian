@@ -32,6 +32,7 @@ class Mercurial(object):
     def collect_data():
         obj = plugin_dispatcher.Collector()
         asset_data = obj.run()
+        asset_data['kinds'] = settings.Params['kinds']
         print('\033[1;33m %s \033[0m' % __file__)
         print(json.dumps(asset_data, indent=4))
         # return asset_data
@@ -39,6 +40,8 @@ class Mercurial(object):
     def report_data(self):
         obj = plugin_dispatcher.Collector()
         this_asset_data = obj.run()
+
+        this_asset_data['kinds'] = settings.Params['kinds']
 
         this_asset_id = self.local_asset_id()
         if this_asset_id:

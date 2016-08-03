@@ -17,6 +17,7 @@ Params = {
     'local_asset_id_file': '%s/var/.asset_id' % BaseDir,
     'log_file': '%s/logs/run_log' % BaseDir,
 
+    'kinds': 'physics_machines',
     'auth': {
         'user': 'axe',
         'token': '123abc'

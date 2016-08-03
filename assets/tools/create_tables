@@ -1,0 +1,264 @@
+-- assets_businessunit
+CREATE TABLE assets_businessunit (
+  id          INT PRIMARY KEY,
+  name        VARCHAR(64),
+  parent_unit INT,
+  memo        VARCHAR(255)
+  -- FOREIGN KEY (parent_unit) REFERENCES assets_businessunit (id)
+);
+ALTER TABLE `assets_businessunit` ADD CONSTRAINT `assets_businessunit_self` FOREIGN KEY (`parent_unit`) REFERENCES `assets_businessunit` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_tag
+CREATE TABLE assets_tag (
+  id      INT PRIMARY KEY,
+  name    VARCHAR(32),
+  creater INT,
+  ctime   DATETIME NOT NULL DEFAULT NOW()
+);
+ALTER TABLE `assets_tag` ADD CONSTRAINT `assets_tag_userprofile` FOREIGN KEY (`creater`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_idc
+CREATE TABLE assets_idc (
+  id   INT PRIMARY KEY,
+  name VARCHAR(64),
+  memo VARCHAR(255) NULL
+);
+
+-- assets_manufactory
+CREATE TABLE assets_manufactory (
+  id          INT PRIMARY KEY,
+  manufactory VARCHAR(64),
+  support_num VARCHAR(32),
+  memo        VARCHAR(255)
+);
+
+-- assets_contract
+CREATE TABLE assets_contract (
+  id          INT PRIMARY KEY,
+  sn          VARCHAR(128) UNIQUE,
+  name        VARCHAR(64),
+  price       INT,
+  detail      VARCHAR(255),
+  start_date  DATETIME,
+  end_date    DATETIME,
+  license_num INT,
+  memo        VARCHAR(255),
+  ctime       DATETIME DEFAULT NOW(),
+  utime       DATETIME DEFAULT NOW()
+);
+
+-- assets_asset
+CREATE TABLE assets_asset (
+  uid           VARCHAR(64) PRIMARY KEY,
+  sn            VARCHAR(128) UNIQUE,
+  business_unit INT,
+  tags          VARCHAR(128),
+  admin         INT,
+  idc           INT,
+  name          VARCHAR(64) UNIQUE,
+  manufactory   INT,
+  management_ip VARCHAR(32),
+  asset_type    VARCHAR(64),
+  contract      INT,
+  trade_date    DATETIME DEFAULT NOW(),
+  expire_date   DATETIME DEFAULT NOW(),
+  price         FLOAT,
+
+  memo          VARCHAR(255),
+  ctime         DATETIME DEFAULT NOW(),
+  utime         DATETIME DEFAULT NOW()
+  -- foreign key references BusinessUnit(),
+);
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_businessunit` FOREIGN KEY (`business_unit`) REFERENCES `assets_businessunit` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_tag` FOREIGN KEY (`tags`) REFERENCES `assets_tag` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_userprofile` FOREIGN KEY (`admin`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_idc` FOREIGN KEY (`idc`) REFERENCES `assets_idc` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_manufactory` FOREIGN KEY (`manufactory`) REFERENCES `assets_manufactory` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_asset` ADD CONSTRAINT `assets_asset_contract` FOREIGN KEY (`contract`) REFERENCES `assets_contract` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_server
+CREATE TABLE assets_server (
+  id              INT PRIMARY KEY,
+  asset           INT UNIQUE,
+  model           VARCHAR(128),
+  raid_type       VARCHAR(16),
+  os_type         VARCHAR(64),
+  os_distribution VARCHAR(64),
+  os_release      VARCHAR(64),
+  host_on         INT,
+  created_by      VARCHAR(16),
+  approved_by     INT,
+  ctime           DATETIME DEFAULT NOW(),
+  utime           DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_server` ADD CONSTRAINT `assets_server_self` FOREIGN KEY (`host_on`) REFERENCES `assets_server` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_server` ADD CONSTRAINT `assets_server_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_software
+CREATE TABLE assets_software (
+  id           INT PRIMARY KEY,
+  type         VARCHAR(64),
+  distribution VARCHAR(32),
+  version      VARCHAR(64),
+  LANGUAGE     VARCHAR(32)
+);
+
+-- assets_netdevice
+CREATE TABLE assets_netdevice (
+  id            INT PRIMARY KEY,
+  asset         INT UNIQUE,
+  sn            VARCHAR(128),
+  vlan_ip       VARCHAR(32),
+  intranet_ip   VARCHAR(32),
+  model         VARCHAR(128),
+  firmware      INT,
+  port_count    SMALLINT,
+  device_detail VARCHAR(256),
+  ctime         DATETIME DEFAULT NOW(),
+  utime         DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_netdevice_software` FOREIGN KEY (`firmware`) REFERENCES `assets_software` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_netdevice_userprofile` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_cpu
+CREATE TABLE assets_cpu (
+  id             INT PRIMARY KEY,
+  asset          INT UNIQUE,
+  cpu_model      VARCHAR(128),
+  cpu_count      SMALLINT,
+  cpu_core_count SMALLINT,
+  memo           VARCHAR(255),
+  ctime          DATETIME DEFAULT NOW(),
+  utime          DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_cpu_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_ram
+CREATE TABLE assets_ram (
+  id       INT PRIMARY KEY,
+  asset    INT UNIQUE,
+  sn       VARCHAR(128),
+  model    VARCHAR(128),
+  slot     SMALLINT,
+  capacity INT,
+  memo     VARCHAR(255),
+  ctime    DATETIME DEFAULT NOW(),
+  utime    DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_ram_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_disk
+CREATE TABLE assets_disk (
+  id          INT PRIMARY KEY,
+  asset       INT UNIQUE,
+  sn          VARCHAR(128),
+  slot        SMALLINT,
+  manufactory VARCHAR(64),
+  model       VARCHAR(128),
+  capacity    SMALLINT,
+  iface_type  VARCHAR(8),
+  memo        VARCHAR(255),
+  ctime       DATETIME DEFAULT NOW(),
+  utime       DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_disk_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_nic
+CREATE TABLE assets_nic (
+  id         INT PRIMARY KEY,
+  asset      INT UNIQUE,
+  name       VARCHAR(64),
+  sn         VARCHAR(128),
+  model      VARCHAR(128),
+  macaddress VARCHAR(64),
+  ipaddress  VARCHAR(32),
+  netmask    VARCHAR(32),
+  bonding    VARCHAR(32),
+  memo       VARCHAR(255),
+  ctime      DATETIME DEFAULT NOW(),
+  utime      DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_nic_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_raidadaptor
+CREATE TABLE assets_raidadaptor (
+  id    INT PRIMARY KEY,
+  asset INT UNIQUE,
+  sn    VARCHAR(128),
+  slot  VARCHAR(64),
+  model VARCHAR(64),
+  memo  VARCHAR(256),
+  ctime DATETIME DEFAULT NOW(),
+  utime DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_raidadaptor_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+-- assets_eventlog
+CREATE TABLE assets_eventlog (
+  id         INT PRIMARY KEY,
+  asset      INT UNIQUE,
+  name       VARCHAR(128),
+  event_type SMALLINT,
+  component  VARCHAR(255),
+  detail     VARCHAR(255),
+  memo       VARCHAR(255),
+  USER       INT,
+  ctime      DATETIME DEFAULT NOW()
+);
+
+ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_eventlog_asset` FOREIGN KEY (`asset`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `assets_eventlog` ADD CONSTRAINT `assets_eventlog_userprofile` FOREIGN KEY (`user`) REFERENCES `userauth_userprofile` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;

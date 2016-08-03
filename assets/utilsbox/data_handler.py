@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 class DataValidityCheck(object):
     def __init__(self, request):
         self.request = request
-        self.mandatory_fields = ['sn', 'asset_id', 'asset_type']
+        self.mandatory_fields = ['sn', 'asset_id', 'asset_type', 'kinds']
         self.field_sets = {
             'asset': ['manufactory'],
             'server': [
@@ -123,8 +123,18 @@ class DataValidityCheck(object):
 
     @property
     def generate_asset_id(self):
-        pass
-        return 0
+        """
+
+        """
+        import hashlib
+        unique_str = "%s%s%s" % (self.clean_data['sn'], self.clean_data['asset_type'], self.clean_data['kinds'])
+
+        obj = hashlib.md5()
+        obj.update(unique_str)
+
+        tmp_str = obj.hexdigest()[-4:].upper()
+        divisiory_asset_id = '00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
+        return divisiory_asset_id
 
 
 class Handler(DataValidityCheck):
@@ -168,6 +178,7 @@ class Handler(DataValidityCheck):
                     'os_type': self.clean_data.get('os_type'),
                     'os_distribution': self.clean_data.get('os_distribution'),
                     'os_release': self.clean_data.get('os_release'),
+                    'approved_by': None
                 }
 
                 obj = models.Server(**data_set)
@@ -212,6 +223,83 @@ class Handler(DataValidityCheck):
                 return obj
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [cpu] %s' % str(e))
+
+    def __create_disk_component(self):
+        disk_info = self.clean_data.get('physical_disk_driver')
+        if disk_info:
+            for disk_item in disk_info:
+                try:
+                    self.field_verify(disk_item, 'slot', str)
+                    self.field_verify(disk_item, 'capacity', float)
+                    self.field_verify(disk_item, 'iface_type', str)
+                    self.field_verify(disk_item, 'model', str)
+                    if not len(self.response['error']):  # no processing when there's no error happend
+                        data_set = {
+                            'asset_id': self.asset_obj.id,
+                            'sn': disk_item.get('sn'),
+                            'slot': disk_item.get('slot'),
+                            'capacity': disk_item.get('capacity'),
+                            'model': disk_item.get('model'),
+                            'iface_type': disk_item.get('iface_type'),
+                            'manufactory': disk_item.get('manufactory'),
+                        }
+
+                        obj = models.Disk(**data_set)
+                        obj.save()
+
+                except Exception, e:
+                    self.response_msg('error', 'ObjectCreationException', 'Object [disk] %s' % str(e))
+        else:
+            self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
+
+    def __create_nic_component(self):
+        nic_info = self.clean_data.get('nic')
+        if nic_info:
+            for nic_item in nic_info:
+                try:
+                    self.field_verify(nic_item, 'macaddress', str)
+                    if not len(self.response['error']):  # no processing when there's no error happend
+                        data_set = {
+                            'asset_id': self.asset_obj.id,
+                            'name': nic_item.get('name'),
+                            'sn': nic_item.get('sn'),
+                            'macaddress': nic_item.get('macaddress'),
+                            'ipaddress': nic_item.get('ipaddress'),
+                            'bonding': nic_item.get('bonding'),
+                            'model': nic_item.get('model'),
+                            'netmask': nic_item.get('netmask'),
+                        }
+
+                        obj = models.NIC(**data_set)
+                        obj.save()
+
+                except Exception, e:
+                    self.response_msg('error', 'ObjectCreationException', 'Object [nic] %s' % str(e))
+        else:
+            self.response_msg('error', 'LackOfData', 'NIC info is not provied in your reporting data')
+
+    def __create_ram_component(self):
+        ram_info = self.clean_data.get('ram')
+        if ram_info:
+            for ram_item in ram_info:
+                try:
+                    self.field_verify(ram_item, 'capacity', int)
+                    if not len(self.response['error']):  # no processing when there's no error happend
+                        data_set = {
+                            'asset_id': self.asset_obj.id,
+                            'slot': ram_item.get("slot"),
+                            'sn': ram_item.get('sn'),
+                            'capacity': ram_item.get('capacity'),
+                            'model': ram_item.get('model'),
+                        }
+
+                        obj = models.RAM(**data_set)
+                        obj.save()
+
+                except Exception, e:
+                    self.response_msg('error', 'ObjectCreationException', 'Object [ram] %s' % str(e))
+        else:
+            self.response_msg('error', 'LackOfData', 'RAM info is not provied in your reporting data')
 
     def _update_asset_server_record(self):
         """
