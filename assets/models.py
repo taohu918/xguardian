@@ -92,13 +92,14 @@ class Asset(models.Model):
     )
     uid = models.CharField(max_length=64, primary_key=True)
     sn = models.CharField(max_length=128, unique=True, verbose_name=u'资产SN号')
-    business_unit = models.ForeignKey('BusinessUnit', verbose_name=u'所属业务线', null=True, blank=True)
+    business_unit = models.ForeignKey('BusinessUnit', db_column='business_unit', verbose_name=u'所属业务线', null=True,
+                                      blank=True)
     tags = models.ManyToManyField('Tag', blank=True)
     admin = models.ForeignKey('userauth.UserProfile', verbose_name=u'资产管理员', null=True, blank=True)
     idc = models.ForeignKey('IDC', verbose_name=u'IDC机房', null=True, blank=True)
 
     name = models.CharField(max_length=64, unique=True)
-    manufactory = models.ForeignKey('Manufactory', verbose_name=u'制造商', null=True, blank=True)
+    manufactory = models.ForeignKey('Manufactory', db_column='manufactory', verbose_name=u'制造商', null=True, blank=True)
     management_ip = models.GenericIPAddressField(blank=True, null=True, verbose_name=u'管理IP')
 
     asset_type = models.CharField(choices=asset_type_choices, max_length=64, default='server')

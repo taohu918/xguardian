@@ -78,12 +78,12 @@ class DataValidityCheck(object):
             if self.response['error']:
                 return False
 
-        if self.agent_asset_id != 0:  # not new asset
+        if int(data['asset_id']) != 0:  # not new asset
             try:
                 if only_check_sn:
                     self.asset_obj = models.Asset.objects.get(sn=data['sn'])
                 else:
-                    self.asset_obj = models.Asset.objects.get(id=int(data['asset_id']), sn=data['sn'])
+                    self.asset_obj = models.Asset.objects.get(id=int(data['uid']), sn=data['sn'])
 
             except ObjectDoesNotExist, e:
                 self.response_msg(
@@ -133,7 +133,8 @@ class DataValidityCheck(object):
         obj.update(unique_str)
 
         tmp_str = obj.hexdigest()[-4:].upper()
-        divisiory_asset_id = '00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
+        divisiory_asset_id = self.clean_data['sn'] + '-00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
+        print(__file__, divisiory_asset_id)
         return divisiory_asset_id
 
 
@@ -156,6 +157,12 @@ class Handler(DataValidityCheck):
         func()
 
     def _create_asset_server(self):
+        data_dic = {
+            'uid': self.generate_asset_id,
+            'sn': self.clean_data['sn']}
+        obj = models.Asset(**data_dic)
+        obj.save()
+
         self.__create_server_info()
         self.__create_or_update_manufactory()
         self.__create_cpu_component()

@@ -17,7 +17,6 @@ class AssetReport(APIView):
         # print(self.request) # 逆推
         asset_handler = Handler(request)
         asset_handler.data_is_valid()
-        print asset_handler.clean_data
         asset_handler.data_incorporated()
         return HttpResponse('ok')
 

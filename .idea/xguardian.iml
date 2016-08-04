@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="MadKing" />
     <orderEntry type="module" module-name="MadKing" />
     <orderEntry type="module" module-name="MadKing" />
+    <orderEntry type="module" module-name="modules" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
