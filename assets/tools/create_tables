@@ -1,10 +1,11 @@
 -- assets_businessunit
 CREATE TABLE xguardian.assets_businessunit (
-  id          INT(11) NOT NULL AUTO_INCREMENT,
-  name        VARCHAR(64)      DEFAULT NULL,
-  parent_unit INT(11)          DEFAULT NULL,
-  memo        VARCHAR(255)     DEFAULT NULL,
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(64) NOT NULL,
+  parent_unit INT(11)              DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
   PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_businessunit_name (name),
   CONSTRAINT FK_assets_businessunit_assets_businessunit_id FOREIGN KEY (parent_unit)
   REFERENCES xguardian.assets_businessunit (id)
     ON DELETE CASCADE
@@ -17,15 +18,16 @@ CREATE TABLE xguardian.assets_businessunit (
 
 -- assets_tag
 CREATE TABLE xguardian.assets_tag (
-  id          INT(11) NOT NULL AUTO_INCREMENT,
-  name        VARCHAR(64)      DEFAULT NULL,
-  creater     INT(11)          DEFAULT NULL,
-  create_time DATETIME         DEFAULT CURRENT_TIMESTAMP,
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  name        VARCHAR(64) NOT NULL,
+  creater     INT(11)     NOT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_tag_name (name),
   CONSTRAINT FK_assets_tag_userauth_userprofile_id FOREIGN KEY (creater)
   REFERENCES xguardian.userauth_userprofile (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -34,10 +36,11 @@ CREATE TABLE xguardian.assets_tag (
 
 -- assets_idc
 CREATE TABLE xguardian.assets_idc (
-  id   INT(11) NOT NULL AUTO_INCREMENT,
-  name VARCHAR(50)      DEFAULT NULL,
-  memo VARCHAR(255)     DEFAULT NULL,
-  PRIMARY KEY (id)
+  id   INT(11)     NOT NULL AUTO_INCREMENT,
+  name VARCHAR(64) NOT NULL,
+  memo VARCHAR(255)         DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_idc_name (name)
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -46,11 +49,13 @@ CREATE TABLE xguardian.assets_idc (
 
 -- assets_manufactory
 CREATE TABLE xguardian.assets_manufactory (
-  id          INT(11) NOT NULL AUTO_INCREMENT,
-  manufactory VARCHAR(32)      DEFAULT NULL,
-  support_num VARCHAR(32)      DEFAULT NULL,
-  memo        VARCHAR(255)     DEFAULT NULL,
-  PRIMARY KEY (id)
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  manufactory VARCHAR(32) NOT NULL,
+  support_num VARCHAR(32)          DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_manufactory_manufactory (manufactory),
+  UNIQUE INDEX UK_assets_manufactory_support_num (support_num)
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -59,18 +64,18 @@ CREATE TABLE xguardian.assets_manufactory (
 
 -- assets_contract
 CREATE TABLE xguardian.assets_contract (
-  id          INT(11) NOT NULL AUTO_INCREMENT,
-  sn          VARCHAR(64)      DEFAULT NULL,
-  name        VARCHAR(64)      DEFAULT NULL,
-  price       FLOAT            DEFAULT NULL,
-  start_date  DATE             DEFAULT NULL,
-  end_date    DATE             DEFAULT NULL,
-  license_num INT(11)          DEFAULT NULL,
-  detail      VARCHAR(255)     DEFAULT NULL,
-  memo        VARCHAR(255)     DEFAULT NULL,
-  create_time DATETIME         DEFAULT CURRENT_TIMESTAMP,
-  update_time DATETIME         DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id)
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  sn          VARCHAR(64) NOT NULL,
+  name        VARCHAR(64) NOT NULL,
+  price       FLOAT                DEFAULT NULL,
+  start_date  DATE                 DEFAULT NULL,
+  end_date    DATE                 DEFAULT NULL,
+  license_num INT(11)              DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_contract_sn (sn)
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -80,49 +85,45 @@ CREATE TABLE xguardian.assets_contract (
 -- assets_asset
 CREATE TABLE xguardian.assets_asset (
   uid           VARCHAR(64) NOT NULL,
-  sn            VARCHAR(64)  DEFAULT NULL,
-  business_unit INT(11)      DEFAULT NULL,
-  tag           INT(11)      DEFAULT NULL,
-  admin         INT(11)      DEFAULT NULL,
-  idc           INT(11)      DEFAULT NULL,
-  name          VARCHAR(64)  DEFAULT NULL,
-  manufactory   INT(11)      DEFAULT NULL,
-  management_ip VARCHAR(32)  DEFAULT NULL,
-  asset_type    VARCHAR(32)  DEFAULT NULL,
-  contract      INT(11)      DEFAULT NULL,
-  trade_date    DATETIME     DEFAULT '0000-00-00 00:00:00',
-  expire_date   DATETIME     DEFAULT '0000-00-00 00:00:00',
-  price         FLOAT        DEFAULT 0,
-  memo          VARCHAR(255) DEFAULT NULL,
-  create_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
-  update_time   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+  sn            VARCHAR(64) NOT NULL,
+  name          VARCHAR(64)          DEFAULT NULL,
+  admin         INT(11)              DEFAULT NULL,
+  business_unit INT(11)              DEFAULT NULL,
+  idc           INT(11)              DEFAULT NULL,
+  manufactory   INT(11)              DEFAULT NULL,
+  contract      INT(11)              DEFAULT NULL,
+  tag           INT(11)              DEFAULT NULL,
+  management_ip VARCHAR(32)          DEFAULT NULL,
+  asset_type    VARCHAR(32)          DEFAULT NULL,
+  trade_date    DATETIME             DEFAULT '0000-00-00 00:00:00',
+  expire_date   DATETIME             DEFAULT '0000-00-00 00:00:00',
+  price         FLOAT                DEFAULT 0,
+  memo          VARCHAR(255)         DEFAULT NULL,
+  create_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (uid),
   UNIQUE INDEX UK_assets_asset_name (name),
   UNIQUE INDEX UK_assets_asset_sn (sn),
   CONSTRAINT FK_assets_asset_assets_businessunit_id FOREIGN KEY (business_unit)
   REFERENCES xguardian.assets_businessunit (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT FK_assets_asset_assets_contract_id FOREIGN KEY (contract)
   REFERENCES xguardian.assets_contract (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT FK_assets_asset_assets_idc_id FOREIGN KEY (idc)
   REFERENCES xguardian.assets_idc (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT FK_assets_asset_assets_manufactory_id FOREIGN KEY (manufactory)
   REFERENCES xguardian.assets_manufactory (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT FK_assets_asset_assets_tag_id FOREIGN KEY (tag)
-  REFERENCES xguardian.assets_tag (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT FK_assets_asset_userauth_userprofile_id FOREIGN KEY (admin)
   REFERENCES xguardian.userauth_userprofile (id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
 )
   ENGINE = INNODB
   CHARACTER SET utf8
@@ -130,18 +131,18 @@ CREATE TABLE xguardian.assets_asset (
 
 -- assets_server
 CREATE TABLE xguardian.assets_server (
-  id              INT(11)  NOT NULL AUTO_INCREMENT,
-  asset           VARCHAR(64)       DEFAULT NULL,
-  model           VARCHAR(128)      DEFAULT NULL,
-  raid_type       VARCHAR(16)       DEFAULT NULL,
-  os_type         VARCHAR(64)       DEFAULT NULL,
-  os_distribution VARCHAR(64)       DEFAULT NULL,
-  os_release      VARCHAR(64)       DEFAULT NULL,
-  host_on         INT(11)           DEFAULT NULL,
-  created_by      VARCHAR(16)       DEFAULT NULL,
-  approved_by     INT(11)  NOT NULL,
-  create_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id              INT(11)     NOT NULL AUTO_INCREMENT,
+  asset           VARCHAR(64) NOT NULL,
+  model           VARCHAR(64)          DEFAULT NULL,
+  raid_type       VARCHAR(16)          DEFAULT NULL,
+  os_type         VARCHAR(64)          DEFAULT NULL,
+  os_distribution VARCHAR(64)          DEFAULT NULL,
+  os_release      VARCHAR(64)          DEFAULT NULL,
+  host_on         INT(11)              DEFAULT NULL,
+  created_by      VARCHAR(16)          DEFAULT NULL,
+  approved_by     INT(11)     NOT NULL DEFAULT 0,
+  create_time     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   CONSTRAINT FK_assets_server_assets_asset_uid FOREIGN KEY (asset)
   REFERENCES xguardian.assets_asset (uid)
@@ -161,143 +162,191 @@ CREATE TABLE xguardian.assets_server (
   CHARACTER SET utf8
   COLLATE utf8_general_ci;
 
--- assets_software
-CREATE TABLE assets_software (
-  id           INT PRIMARY KEY,
-  type         VARCHAR(64),
-  distribution VARCHAR(32),
-  version      VARCHAR(64),
-  LANGUAGE     VARCHAR(32)
-);
+-- assets_platform
+CREATE TABLE xguardian.assets_platform (
+  id       INT(11) NOT NULL AUTO_INCREMENT,
+  type     VARCHAR(32)      DEFAULT NULL,
+  version  VARCHAR(32)      DEFAULT NULL,
+  LANGUAGE VARCHAR(16)      DEFAULT NULL,
+  memom    VARCHAR(255)     DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_platform_version (version)
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_netdevice
-CREATE TABLE assets_netdevice (
-  id            INT PRIMARY KEY,
-  asset_id      INT UNIQUE,
-  sn            VARCHAR(128),
-  vlan_ip       VARCHAR(32),
-  intranet_ip   VARCHAR(32),
-  model         VARCHAR(128),
-  firmware_id   INT,
-  port_count    SMALLINT,
-  device_detail VARCHAR(256),
-  ctime         DATETIME DEFAULT NOW(),
-  utime         DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_netdevice_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_netdevice_software` FOREIGN KEY (`firmware_id`) REFERENCES `assets_software` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_netdevice (
+  id            INT(11)     NOT NULL AUTO_INCREMENT,
+  asset         VARCHAR(64) NOT NULL,
+  sn            VARCHAR(64)          DEFAULT NULL,
+  vlan_ip       VARCHAR(32)          DEFAULT NULL,
+  intranet_ip   VARCHAR(32)          DEFAULT NULL,
+  model         VARCHAR(32)          DEFAULT NULL,
+  firmware      INT(11)              DEFAULT NULL,
+  port_count    SMALLINT(6)          DEFAULT NULL,
+  device_detail VARCHAR(255)         DEFAULT NULL,
+  create_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_netdevice_asset (asset),
+  CONSTRAINT FK_assets_netdevice_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
+  CONSTRAINT FK_assets_netdevice_assets_software_id FOREIGN KEY (firmware)
+  REFERENCES xguardian.assets_platform (id)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_cpu
-CREATE TABLE assets_cpu (
-  id             INT PRIMARY KEY,
-  asset_id       INT UNIQUE,
-  cpu_model      VARCHAR(128),
-  cpu_count      SMALLINT,
-  cpu_core_count SMALLINT,
-  memo           VARCHAR(255),
-  ctime          DATETIME DEFAULT NOW(),
-  utime          DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_cpu` ADD CONSTRAINT `assets_cpu_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_cpu (
+  id             INT(11)     NOT NULL AUTO_INCREMENT,
+  asset          VARCHAR(64) NOT NULL,
+  cpu_model      VARCHAR(64)          DEFAULT NULL,
+  cpu_count      SMALLINT(6)          DEFAULT NULL,
+  cpu_core_count SMALLINT(6)          DEFAULT NULL,
+  memo           VARCHAR(255)         DEFAULT NULL,
+  create_time    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_cpu_asset (asset),
+  CONSTRAINT FK_assets_cpu_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_ram
-CREATE TABLE assets_ram (
-  id       INT PRIMARY KEY,
-  asset_id INT UNIQUE,
-  sn       VARCHAR(128),
-  model    VARCHAR(128),
-  slot     SMALLINT,
-  capacity INT,
-  memo     VARCHAR(255),
-  ctime    DATETIME DEFAULT NOW(),
-  utime    DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_ram` ADD CONSTRAINT `assets_ram_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_ram (
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  asset       VARCHAR(64) NOT NULL,
+  sn          VARCHAR(64)          DEFAULT NULL,
+  model       VARCHAR(64)          DEFAULT NULL,
+  slot        SMALLINT(6)          DEFAULT NULL,
+  capacity    SMALLINT(6)          DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_ram_asset (asset),
+  CONSTRAINT FK_assets_ram_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_disk
-CREATE TABLE assets_disk (
-  id          INT PRIMARY KEY,
-  asset_id    INT UNIQUE,
-  sn          VARCHAR(128),
-  slot        SMALLINT,
-  manufactory VARCHAR(64),
-  model       VARCHAR(128),
-  capacity    SMALLINT,
-  iface_type  VARCHAR(8),
-  memo        VARCHAR(255),
-  ctime       DATETIME DEFAULT NOW(),
-  utime       DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_disk` ADD CONSTRAINT `assets_disk_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_disk (
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  asset       VARCHAR(64) NOT NULL,
+  sn          VARCHAR(64)          DEFAULT NULL,
+  slot        SMALLINT(6)          DEFAULT NULL,
+  manufactory VARCHAR(64)          DEFAULT NULL,
+  model       VARCHAR(64)          DEFAULT NULL,
+  capacity    SMALLINT(6)          DEFAULT NULL,
+  iface_type  VARCHAR(16)          DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_disk_asset (asset),
+  CONSTRAINT FK_assets_disk_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_nic
-CREATE TABLE assets_nic (
-  id         INT PRIMARY KEY,
-  asset_id   INT UNIQUE,
-  name       VARCHAR(64),
-  sn         VARCHAR(128),
-  model      VARCHAR(128),
-  macaddress VARCHAR(64),
-  ipaddress  VARCHAR(32),
-  netmask    VARCHAR(32),
-  bonding    VARCHAR(32),
-  memo       VARCHAR(255),
-  ctime      DATETIME DEFAULT NOW(),
-  utime      DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_nic_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_nic (
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  asset       VARCHAR(64) NOT NULL,
+  name        VARCHAR(64)          DEFAULT NULL,
+  sn          VARCHAR(64)          DEFAULT NULL,
+  model       VARCHAR(64)          DEFAULT NULL,
+  macaddress  VARCHAR(32)          DEFAULT NULL,
+  ipaddress   VARCHAR(32)          DEFAULT NULL,
+  netmask     VARCHAR(32)          DEFAULT NULL,
+  bonding     VARCHAR(8)           DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_nic_asset (asset),
+  CONSTRAINT FK_assets_nic_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_raidadaptor
-CREATE TABLE assets_raidadaptor (
-  id       INT PRIMARY KEY,
-  asset_id INT UNIQUE,
-  sn       VARCHAR(128),
-  slot     VARCHAR(64),
-  model    VARCHAR(64),
-  memo     VARCHAR(256),
-  ctime    DATETIME DEFAULT NOW(),
-  utime    DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_netdevice` ADD CONSTRAINT `assets_raidadaptor_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_raidadaptor (
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  asset       VARCHAR(64) NOT NULL,
+  sn          VARCHAR(64)          DEFAULT NULL,
+  slot        SMALLINT(6)          DEFAULT NULL,
+  model       VARCHAR(64)          DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_raidadaptor_asset (asset),
+  CONSTRAINT FK_assets_raidadaptor_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;
 
 -- assets_eventlog
-CREATE TABLE assets_eventlog (
-  id         INT PRIMARY KEY,
-  asset_id   INT UNIQUE,
-  name       VARCHAR(128),
-  event_type SMALLINT,
-  component  VARCHAR(255),
-  detail     VARCHAR(255),
-  memo       VARCHAR(255),
-  user_id    INT,
-  ctime      DATETIME DEFAULT NOW()
-);
-
-ALTER TABLE `assets_eventlog` ADD CONSTRAINT `assets_eventlog_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets_asset` (`uid`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE `assets_eventlog` ADD CONSTRAINT `assets_eventlog_userprofile` FOREIGN KEY (`user_id`) REFERENCES `userauth_userprofile` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
+CREATE TABLE xguardian.assets_eventlog (
+  id          INT(11)     NOT NULL AUTO_INCREMENT,
+  asset       VARCHAR(64) NOT NULL,
+  user        INT(11)     NOT NULL,
+  name        VARCHAR(64)          DEFAULT NULL,
+  event_type  SMALLINT(6)          DEFAULT NULL,
+  component   VARCHAR(255)         DEFAULT NULL,
+  detail      VARCHAR(255)         DEFAULT NULL,
+  memo        VARCHAR(255)         DEFAULT NULL,
+  create_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE INDEX UK_assets_eventlog_asset (asset),
+  CONSTRAINT FK_assets_eventlog_assets_asset_uid FOREIGN KEY (asset)
+  REFERENCES xguardian.assets_asset (uid)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
+  CONSTRAINT FK_assets_eventlog_userauth_userprofile_id FOREIGN KEY (user)
+  REFERENCES xguardian.userauth_userprofile (id)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)
+  ENGINE = INNODB
+  AUTO_INCREMENT = 1
+  CHARACTER SET utf8
+  COLLATE utf8_general_ci;

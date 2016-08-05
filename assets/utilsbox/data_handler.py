@@ -83,7 +83,7 @@ class DataValidityCheck(object):
                 if only_check_sn:
                     self.asset_obj = models.Asset.objects.get(sn=data['sn'])
                 else:
-                    self.asset_obj = models.Asset.objects.get(id=int(data['uid']), sn=data['sn'])
+                    self.asset_obj = models.Asset.objects.get(uid=int(data['uid']), sn=data['sn'])
 
             except ObjectDoesNotExist, e:
                 self.response_msg(
@@ -171,7 +171,7 @@ class Handler(DataValidityCheck):
         self.__create_ram_component()
 
         log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
-            self.asset_obj.id, self.asset_obj)
+            self.asset_obj.uid, self.asset_obj)
         self.response_msg('info', 'NewAssetOnline', log_msg)
 
     def __create_server_info(self, ignore_errs=False):
@@ -179,13 +179,14 @@ class Handler(DataValidityCheck):
             self.field_verify(self.clean_data, 'model', str)
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
                 data_set = {
-                    'asset_id': self.generate_asset_id,
-                    'raid_type': self.clean_data.get('raid_type'),
+                    'asset': self.generate_asset_id,
                     'model': self.clean_data.get('model'),
+                    'raid_type': self.clean_data.get('raid_type'),
                     'os_type': self.clean_data.get('os_type'),
                     'os_distribution': self.clean_data.get('os_distribution'),
                     'os_release': self.clean_data.get('os_release'),
-                    'approved_by': None
+                    'approved_by': None,
+                    'host_on': None
                 }
 
                 obj = models.Server(**data_set)
