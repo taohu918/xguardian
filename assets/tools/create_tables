@@ -26,8 +26,8 @@ CREATE TABLE xguardian.assets_tag (
   UNIQUE INDEX UK_assets_tag_name (name),
   CONSTRAINT FK_assets_tag_userauth_userprofile_id FOREIGN KEY (creater)
   REFERENCES xguardian.userauth_userprofile (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -106,24 +106,24 @@ CREATE TABLE xguardian.assets_asset (
   UNIQUE INDEX UK_assets_asset_sn (sn),
   CONSTRAINT FK_assets_asset_assets_businessunit_id FOREIGN KEY (business_unit)
   REFERENCES xguardian.assets_businessunit (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_asset_assets_contract_id FOREIGN KEY (contract)
   REFERENCES xguardian.assets_contract (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_asset_assets_idc_id FOREIGN KEY (idc)
   REFERENCES xguardian.assets_idc (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_asset_assets_manufactory_id FOREIGN KEY (manufactory)
   REFERENCES xguardian.assets_manufactory (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_asset_userauth_userprofile_id FOREIGN KEY (admin)
   REFERENCES xguardian.userauth_userprofile (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )
   ENGINE = INNODB
   CHARACTER SET utf8
@@ -146,16 +146,16 @@ CREATE TABLE xguardian.assets_server (
   PRIMARY KEY (id),
   CONSTRAINT FK_assets_server_assets_asset_uid FOREIGN KEY (asset)
   REFERENCES xguardian.assets_asset (uid)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_server_assets_server_id FOREIGN KEY (host_on)
   REFERENCES xguardian.assets_server (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_server_userauth_userprofile_id FOREIGN KEY (approved_by)
   REFERENCES xguardian.userauth_userprofile (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1
@@ -194,12 +194,12 @@ CREATE TABLE xguardian.assets_netdevice (
   UNIQUE INDEX UK_assets_netdevice_asset (asset),
   CONSTRAINT FK_assets_netdevice_assets_asset_uid FOREIGN KEY (asset)
   REFERENCES xguardian.assets_asset (uid)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT,
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
   CONSTRAINT FK_assets_netdevice_assets_software_id FOREIGN KEY (firmware)
   REFERENCES xguardian.assets_platform (id)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 )
   ENGINE = INNODB
   AUTO_INCREMENT = 1

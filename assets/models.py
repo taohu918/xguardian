@@ -108,15 +108,15 @@ class Asset(models.Model):
     price = models.FloatField(blank=True, null=True, verbose_name=u'价格')
 
     memo = models.CharField(max_length=255, blank=True, null=True)
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
+    create_time = models.DateTimeField(blank=True, auto_now_add=True)
+    update_time = models.DateTimeField(blank=True, auto_now=True)
 
     class Meta:
         verbose_name = '资产明细表'
         verbose_name_plural = "资产明细表"
 
     def __unicode__(self):
-        return 'id:%s name:%s' % (self.id, self.name)
+        return 'id:%s name:%s' % (self.uid, self.name)
 
 
 class TagAsset(models.Model):
@@ -142,7 +142,7 @@ class Server(models.Model):
 
     hosted_on = models.ForeignKey('self', db_column='hosted_on', blank=True, null=True)  # for vitural server
     created_by = models.CharField(choices=created_by_choices, max_length=16, default='auto')
-    approved_by = models.ForeignKey('userauth.UserProfile', db_column='approved_by', default=0)
+    approved_by = models.ForeignKey('userauth.UserProfile', db_column='approved_by', blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 

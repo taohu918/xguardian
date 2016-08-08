@@ -29,6 +29,7 @@ class DataValidityCheck(object):
         self.clean_data = None
         self.agent_asset_id = None
         self.asset_obj = None
+        self.asset_uid = None
 
     def data_is_valid(self):
         """校验数据是否可用"""
@@ -78,21 +79,6 @@ class DataValidityCheck(object):
             if self.response['error']:
                 return False
 
-        if int(data['asset_id']) != 0:  # not new asset
-            try:
-                if only_check_sn:
-                    self.asset_obj = models.Asset.objects.get(sn=data['sn'])
-                else:
-                    self.asset_obj = models.Asset.objects.get(uid=int(data['uid']), sn=data['sn'])
-
-            except ObjectDoesNotExist, e:
-                self.response_msg(
-                    'error',
-                    'AssetDataInvalid',
-                    "Cannot find asset object by asset id [%s] and SN [%s] " % (data['asset_id'], data['sn']))
-                self.waiting_approval = True
-                return False
-
     def asset_type_existing(self):
         """
         :func  ensure data from agent contains asset_type
@@ -121,11 +107,7 @@ class DataValidityCheck(object):
                 "The field [%s] has no value provided in your reporting data [%s]" % (
                     field_key, data_set))
 
-    @property
-    def generate_asset_id(self):
-        """
-
-        """
+    def generate_asset_uid(self):
         import hashlib
         unique_str = "%s%s%s" % (self.clean_data['sn'], self.clean_data['asset_type'], self.clean_data['kinds'])
 
@@ -133,9 +115,10 @@ class DataValidityCheck(object):
         obj.update(unique_str)
 
         tmp_str = obj.hexdigest()[-4:].upper()
-        divisiory_asset_id = self.clean_data['sn'] + '-00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
-        print(__file__, divisiory_asset_id)
-        return divisiory_asset_id
+        self.asset_uid = self.clean_data['sn'] + '-00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
+        print(__file__, self.asset_uid)
+
+        return self.asset_uid
 
 
 class Handler(DataValidityCheck):
@@ -156,30 +139,46 @@ class Handler(DataValidityCheck):
         func = getattr(self, '_update_asset_%s_record' % types)
         func()
 
-    def _create_asset_server(self):
-        data_dic = {
-            'uid': self.generate_asset_id,
-            'sn': self.clean_data['sn']}
-        obj = models.Asset(**data_dic)
-        obj.save()
+    def _create_asset_server(self, only_check_sn=False):
+        self.generate_asset_uid()
+        if self.asset_uid is None:
+            self.response_msg('error', 'AssetUidInvalid', 'generate asset id failed ! ')
+            return False
 
+        # self.__create_asset_obj()
         self.__create_server_info()
-        self.__create_or_update_manufactory()
-        self.__create_cpu_component()
-        self.__create_disk_component()
-        self.__create_nic_component()
-        self.__create_ram_component()
+        # self.__create_or_update_manufactory()
+        # self.__create_cpu_component()
+        # self.__create_disk_component()
+        # self.__create_nic_component()
+        # self.__create_ram_component()
+
+        if only_check_sn:
+            self.asset_obj = models.Asset.objects.get(sn=self.clean_data['sn'])
+        else:
+            self.asset_obj = models.Asset.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
 
         log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
             self.asset_obj.uid, self.asset_obj)
         self.response_msg('info', 'NewAssetOnline', log_msg)
+
+    def __create_asset_obj(self):
+        try:
+            data_dic = {
+                'uid': self.asset_uid,
+                'sn': self.clean_data['sn']}
+            models.Asset.objects.create(**data_dic)
+
+        except Exception, e:
+            self.response_msg('error', 'ObjectCreationException', 'Object [asset] %s' % str(e))
+            return False
 
     def __create_server_info(self, ignore_errs=False):
         try:
             self.field_verify(self.clean_data, 'model', str)
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
                 data_set = {
-                    'asset': self.generate_asset_id,
+                    'asset': self.asset_uid,
                     'model': self.clean_data.get('model'),
                     'raid_type': self.clean_data.get('raid_type'),
                     'os_type': self.clean_data.get('os_type'),
@@ -189,11 +188,11 @@ class Handler(DataValidityCheck):
                     'host_on': None
                 }
 
-                obj = models.Server(**data_set)
-                obj.save()
-                return obj
+                models.Server.objects.create(**data_set)
+                return True
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
+            return False
 
     def __create_or_update_manufactory(self, ignore_errs=False):
         try:
