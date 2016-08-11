@@ -11,7 +11,7 @@ from utilsbox import decorations
 from utilsbox.data_handler import Handler
 
 
-class AssetReport(APIView):
+class ServerReport(APIView):
     @decorations.token_validate
     def post(self, request):
         # print(self.request) # 逆推

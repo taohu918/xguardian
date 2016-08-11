@@ -11,9 +11,10 @@ from userauth.models import UserProfile
 
 
 # Create your models here.
-class BusinessUnit(models.Model):
-    name = models.CharField(unique=True, max_length=64, verbose_name='业务线')
-    parent_unit = models.ForeignKey('self', db_column='parent_unit', blank=True, null=True, verbose_name='子业务')
+class Business(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50, verbose_name='业务线')
+    server_number = models.IntegerField(blank=True, null=True, verbose_name='服务器数量')
     memo = models.CharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
@@ -24,18 +25,11 @@ class BusinessUnit(models.Model):
         verbose_name_plural = u"业务线"
 
 
-class Tag(models.Model):
-    name = models.CharField(unique=True, max_length=64, verbose_name='Tag name')
-    creater = models.ForeignKey('userauth.UserProfile', db_column='creater', verbose_name='创建者')
-    create_time = models.DateField(auto_now_add=True)
-
-    def __unicode__(self):
-        return self.name
-
-
 class IDC(models.Model):
-    name = models.CharField(unique=True, max_length=64, verbose_name=u'机房名称')
-    memo = models.CharField(max_length=255, blank=True, null=True)
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50, verbose_name=u'机房名称')
+    area = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在地')
+    tel = models.IntegerField(blank=True, null=True, verbose_name='联系电话')
 
     def __unicode__(self):
         return self.name
@@ -45,30 +39,14 @@ class IDC(models.Model):
         verbose_name_plural = u"机房"
 
 
-class Manufactory(models.Model):
-    manufactory = models.CharField(unique=True, max_length=64, verbose_name=u'厂商名称')
-    support_num = models.CharField(max_length=32, blank=True, null=True, verbose_name=u'支持电话')
-    memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
-
-    def __unicode__(self):
-        return self.manufactory
-
-    class Meta:
-        verbose_name = u'厂商'
-        verbose_name_plural = u"厂商"
-
-
 class Contract(models.Model):
-    sn = models.CharField(unique=True, max_length=64, verbose_name=u'合同号')
-    name = models.CharField(max_length=64, verbose_name=u'合同名称')
-    price = models.FloatField(verbose_name=u'合同金额')
-    start_date = models.DateField(blank=True)
-    end_date = models.DateField(blank=True)
-    license_num = models.IntegerField(blank=True, verbose_name=u'license数量')
-    detail = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'合同详细')
+    id = models.IntegerField(primary_key=True)
+    sn = models.CharField(unique=True, max_length=50, verbose_name=u'合同号')
+    name = models.CharField(max_length=50, verbose_name=u'合同名称')
+    license_num = models.IntegerField(blank=True, null=True, verbose_name=u'license数量')
     memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
-    create_time = models.DateField(auto_now_add=True)
-    update_time = models.DateField(auto_now=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = u'合同'
@@ -78,53 +56,31 @@ class Contract(models.Model):
         return self.name
 
 
-class Asset(models.Model):
-    asset_type_choices = (
-        ('server', u'服务器'),
-        ('switch', u'交换机'),
-        ('router', u'路由器'),
-        ('firewall', u'防火墙'),
-        ('storage', u'存储设备'),
-        ('NLB', u'NetScaler'),
-        ('wireless', u'无线AP'),
-        ('software', u'软件资产'),
-        ('others', u'其它类'),
-    )
-    uid = models.CharField(primary_key=True, max_length=64, verbose_name='资产唯一id')
-    sn = models.CharField(unique=True, max_length=64, verbose_name=u'资产SN号')
-    name = models.CharField(unique=True, max_length=64)
-
-    admin = models.ForeignKey('userauth.UserProfile', db_column='admin', blank=True, null=True)
-    business_unit = models.ForeignKey('BusinessUnit', db_column='business_unit', blank=True, null=True)
-    idc = models.ForeignKey('IDC', db_column='idc', blank=True, null=True)
-    manufactory = models.ForeignKey('Manufactory', db_column='manufactory', blank=True, null=True)
-    contract = models.ForeignKey('Contract', db_column='contract', blank=True, null=True)
-    tag = models.ManyToManyField('Tag', through='TagAsset')
-
-    management_ip = models.GenericIPAddressField(blank=True, null=True, verbose_name=u'管理IP')
-    asset_type = models.CharField(choices=asset_type_choices, max_length=64, default='server')
-    trade_date = models.DateField(blank=True, null=True, verbose_name=u'购买时间')
-    expire_date = models.DateField(blank=True, null=True, verbose_name=u'过保时间', )
-    price = models.FloatField(blank=True, null=True, verbose_name=u'价格')
-
-    memo = models.CharField(max_length=255, blank=True, null=True)
-    create_time = models.DateTimeField(blank=True, auto_now_add=True)
-    update_time = models.DateTimeField(blank=True, auto_now=True)
-
-    class Meta:
-        verbose_name = '资产明细表'
-        verbose_name_plural = "资产明细表"
+class ProductModel(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50, verbose_name=u'产品型号')
+    manufactory = models.CharField(max_length=50, verbose_name=u'厂商名称')
+    support_num = models.IntegerField(blank=True, null=True, verbose_name=u'支持电话')
+    memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
 
     def __unicode__(self):
-        return 'id:%s name:%s' % (self.uid, self.name)
-
-
-class TagAsset(models.Model):
-    asset_uid = models.ForeignKey('Asset')
-    tag_id = models.ForeignKey('Tag')
+        return self.manufactory
 
     class Meta:
-        db_table = 'assets_tag_asset'
+        db_table = 'asset_product_model'
+        verbose_name = u'厂商'
+        verbose_name_plural = u"厂商"
+
+
+class Tag(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(unique=True, max_length=50, verbose_name='Tag name')
+    creater = models.ForeignKey('userauth.UserProfile', db_column='creater', verbose_name='创建者')
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return self.name
 
 
 class Server(models.Model):
@@ -132,17 +88,19 @@ class Server(models.Model):
         ('auto', 'Auto'),
         ('manual', 'Manual'),
     )
+    uid = models.CharField(primary_key=True, max_length=50)
+    sn = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, blank=True, null=True)
+    model = models.CharField(max_length=50, blank=True, null=True)
+    mip = models.CharField(max_length=50, blank=True, null=True)
+    product_model = models.ForeignKey('ProductModel', blank=True, null=True)
+    business = models.ForeignKey('Business', blank=True, null=True, verbose_name=u'业务')
+    idc = models.ForeignKey('IDC', blank=True, null=True, verbose_name=u'机房')
+    contract = models.ForeignKey('Contract', blank=True, null=True, verbose_name=u'合同')
+    admin = models.ForeignKey('userauth.UserProfile', blank=True, null=True, verbose_name=u'管理员')
 
-    asset = models.OneToOneField('Asset', db_column='asset')
-    model = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'型号')
-    raid_type = models.CharField(max_length=16, blank=True, null=True, verbose_name=u'raid类型')
-    os_type = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'操作系统类型')
-    os_distribution = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'发型版本')
-    os_release = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'操作系统版本')
-
-    hosted_on = models.ForeignKey('self', db_column='hosted_on', blank=True, null=True)  # for vitural server
-    created_by = models.CharField(choices=created_by_choices, max_length=16, default='auto')
-    approved_by = models.ForeignKey('userauth.UserProfile', db_column='approved_by', blank=True, null=True)
+    expired_date = models.DateField(blank=True, null=True, default=0, verbose_name='过保日期')
+    hosted_on = models.GenericIPAddressField(max_length=32, blank=True, null=True, verbose_name='虚拟底层')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
@@ -154,56 +112,40 @@ class Server(models.Model):
         return '%s sn:%s' % (self.asset.name, self.asset.sn)
 
 
-class Platform(models.Model):
+class TagAsset(models.Model):
+    server_uid = models.ForeignKey('Server')
+    tag_id = models.ForeignKey('Tag')
+
+    class Meta:
+        db_table = 'assets_server_tag'
+
+
+class OS(models.Model):
     os_types_choice = (
         ('linux', 'Linux'),
-        ('windows', 'Windows'),
-        ('firmware', 'Network Firmware'),
-        ('software', 'Softwares'),)
-    os_distribution_choices = (
+        ('windows', 'Windows'))
+    model_types_choices = (
         ('windows', 'Windows'),
         ('centos', 'CentOS'),
         ('ubuntu', 'Ubuntu'))
-    language_choices = (
-        ('cn', u'中文'),
-        ('en', u'英文'))
-    type = models.CharField(choices=os_types_choice, max_length=32, default=1, verbose_name=u'系统类型')
-    version = models.CharField(unique=True, max_length=32, verbose_name=u'软件/系统版本')
-    language = models.CharField(choices=language_choices, default='cn', max_length=16)
-    memo = models.CharField(max_length=255)
+    uid = models.CharField(primary_key=True, max_length=50)
+    os = models.CharField(choices=os_types_choice, max_length=50, default=1, verbose_name=u'系统类型')
+    model = models.CharField(choices=model_types_choices, max_length=50, default=1, verbose_name=u'软件/系统版本')
+    distribution = models.CharField(max_length=50, blank=True, null=True)
 
     def __unicode__(self):
         return self.version
 
     class Meta:
-        verbose_name = '软件/系统'
-        verbose_name_plural = "软件/系统"
-
-
-class NetDevice(models.Model):
-    asset = models.OneToOneField('Asset', db_column='asset')
-    sn = models.CharField(unique=True, max_length=64, verbose_name=u'SN号')
-    vlan_ip = models.GenericIPAddressField(blank=True, null=True, verbose_name=u'VlanIP')
-    intranet_ip = models.GenericIPAddressField(blank=True, null=True, verbose_name=u'内网IP')
-
-    model = models.CharField(max_length=32, blank=True, null=True, verbose_name=u'型号')
-    firmware = models.ForeignKey('Platform', db_column='firmware', blank=True, null=True)
-    port_count = models.SmallIntegerField(blank=True, null=True, verbose_name=u'端口个数')
-    device_detail = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'设置详细配置')
-    creat_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = u'网络设备'
-        verbose_name_plural = u"网络设备"
+        verbose_name = '系统'
+        verbose_name_plural = "系统"
 
 
 class CPU(models.Model):
-    asset = models.OneToOneField('Asset', db_column='asset')
-    cpu_model = models.CharField(max_length=64, blank=True, verbose_name=u'CPU型号')
-    cpu_count = models.SmallIntegerField(u'物理cpu颗数')
-    cpu_core_count = models.SmallIntegerField(u'cpu核数')
-    memo = models.CharField(u'备注', max_length=255, blank=True, null=True)
+    uid = models.OneToOneField('Server', db_column='uid', unique=True)
+    cpu_model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'CPU型号')
+    physical_count = models.SmallIntegerField(u'物理cpu颗数')
+    logic_count = models.SmallIntegerField(u'逻辑cpu核数')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
@@ -216,22 +158,21 @@ class CPU(models.Model):
 
 
 class RAM(models.Model):
-    asset = models.ForeignKey('Asset', db_column='asset')
-    sn = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'SN号')
-    model = models.CharField(max_length=128, verbose_name=u'内存型号')
-    slot = models.SmallIntegerField(u'插槽')
-    capacity = models.IntegerField(u'内存大小(MB)')
+    uid = models.ForeignKey('Server', db_column='uid')
+    sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
+    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
+    slot = models.IntegerField(u'插槽', blank=True, null=True)
+    capacity = models.IntegerField(u'内存大小(MB)', blank=True, null=True)
     memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s:%s:%s' % (self.asset_id, self.slot, self.capacity)
+        return '%s:%s:%s' % (self.uid, self.slot, self.capacity)
 
     class Meta:
         verbose_name = 'RAM'
         verbose_name_plural = "RAM"
-        unique_together = ("asset", "slot")
 
     auto_create_fields = ['sn', 'slot', 'model', 'capacity']
 
@@ -243,43 +184,41 @@ class Disk(models.Model):
         ('SCSI', 'SCSI'),
         ('SSD', 'SSD'),
     )
-    asset = models.ForeignKey('Asset', db_column='asset')
-    sn = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'SN号')
-    slot = models.SmallIntegerField(u'插槽位')
-    manufactory = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'制造商')
-    model = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'磁盘型号')
-    capacity = models.SmallIntegerField(u'磁盘容量GB')
+    uid = models.ForeignKey('Server', db_column='uid')
+    sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
+    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'磁盘型号')
+    slot = models.SmallIntegerField(blank=True, null=True, verbose_name='插槽位')
+    capacity = models.SmallIntegerField(blank=True, null=True, verbose_name='磁盘容量GB')
+    manufactory = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'制造商')
     iface_type = models.CharField(max_length=16, choices=disk_iface_choice, default='SAS', verbose_name=u'接口类型')
-    memo = models.CharField(max_length=255, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
     auto_create_fields = ['sn', 'slot', 'manufactory', 'model', 'capacity', 'iface_type']
 
     class Meta:
-        unique_together = ("asset", "slot")
+        # unique_together = ("asset", "slot")
         verbose_name = '硬盘'
         verbose_name_plural = "硬盘"
 
     def __unicode__(self):
-        return '%s:slot:%s capacity:%s' % (self.asset_id, self.slot, self.capacity)
+        return '%s:slot:%s capacity:%s' % (self.uid, self.slot, self.capacity)
 
 
 class NIC(models.Model):
-    asset = models.ForeignKey('Asset', db_column='asset')
-    name = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'网卡名')
-    sn = models.CharField(max_length=64, blank=True, null=True)
-    model = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'网卡型号')
-    macaddress = models.CharField(max_length=32, unique=True, verbose_name=u'MAC')
-    ipaddress = models.GenericIPAddressField(max_length=32, blank=True, null=True, verbose_name=u'IP')
-    netmask = models.CharField(max_length=32, blank=True, null=True)
+    uid = models.ForeignKey('Server', db_column='uid')
+    sn = models.CharField(max_length=50, blank=True, null=True)
+    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡型号')
+    name = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡名')
+    ip = models.GenericIPAddressField(max_length=32, blank=True, null=True)
+    mask = models.GenericIPAddressField(max_length=32, blank=True, null=True)
+    mac = models.CharField(max_length=32, unique=True, verbose_name=u'MAC')
     bonding = models.CharField(max_length=8, blank=True, null=True)
-    memo = models.CharField(max_length=255, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s:%s' % (self.asset_id, self.macaddress)
+        return '%s:%s' % (self.uid, self.mac)
 
     class Meta:
         verbose_name = u'网卡'
@@ -287,22 +226,6 @@ class NIC(models.Model):
         # unique_together = ("asset_id", "slot")
 
     auto_create_fields = ['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask', 'bonding']
-
-
-class RaidAdaptor(models.Model):
-    asset = models.ForeignKey('Asset', db_column='asset')
-    sn = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'SN号')
-    slot = models.CharField(max_length=64, verbose_name=u'插口数')
-    model = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'型号')
-    memo = models.CharField(max_length=255, blank=True, null=True)
-    ctime = models.DateTimeField(auto_now_add=True)
-    utime = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        unique_together = ("asset", "slot")
 
 
 class EventLog(models.Model):
@@ -315,7 +238,7 @@ class EventLog(models.Model):
         (6, u'业务上线\更新\变更'),
         (7, u'其它'),
     )
-    asset = models.ForeignKey('Asset', db_column='asset')
+    uid = models.ForeignKey('Server', db_column='uid')
     user = models.ForeignKey('userauth.UserProfile', verbose_name=u'事件源')
     name = models.CharField(max_length=128, verbose_name=u'事件名称')
 

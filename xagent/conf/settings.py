@@ -13,7 +13,7 @@ Params = {
     "server": "127.0.0.1",
     "port": 9000,
     'request_timeout': 30,
-    "urls": "/asset/report/",
+    "urls": "/asset/server/",
     'local_asset_id_file': '%s/var/.asset_id' % BaseDir,
     'log_file': '%s/logs/run_log' % BaseDir,
 

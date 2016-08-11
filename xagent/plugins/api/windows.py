@@ -38,13 +38,13 @@ class Main(object):
         data = {}
         cpu_lists = self.wmi_obj.Win32_Processor()
         cpu_core_count = 0
-        data["cpu_count"] = len(cpu_lists)
+        data["physical_count"] = len(cpu_lists)
 
         for cpu in cpu_lists:
             cpu_core_count += cpu.NumberOfCores
 
         data["cpu_model"] = cpu_lists[0].Name
-        data["cpu_core_count"] = cpu_core_count
+        data["logic_count"] = cpu_core_count
         return data
 
     def get_ram_info(self):

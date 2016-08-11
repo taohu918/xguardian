@@ -145,32 +145,38 @@ class Handler(DataValidityCheck):
             self.response_msg('error', 'AssetUidInvalid', 'generate asset id failed ! ')
             return False
 
-        # self.__create_asset_obj()
-        self.__create_server_info()
+        self.__add_server_obj()
+        # self.__create_server_info()
         # self.__create_or_update_manufactory()
         # self.__create_cpu_component()
         # self.__create_disk_component()
         # self.__create_nic_component()
         # self.__create_ram_component()
 
-        if only_check_sn:
-            self.asset_obj = models.Asset.objects.get(sn=self.clean_data['sn'])
-        else:
-            self.asset_obj = models.Asset.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
+        # if only_check_sn:
+        #     self.server_obj = models.Server.objects.get(sn=self.clean_data['sn'])
+        # else:
+        #     self.server_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
+        #
+        # log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
+        #     self.server_obj.uid, self.server_obj)
+        # self.response_msg('info', 'NewAssetOnline', log_msg)
 
-        log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
-            self.asset_obj.uid, self.asset_obj)
-        self.response_msg('info', 'NewAssetOnline', log_msg)
-
-    def __create_asset_obj(self):
+    def __add_server_obj(self, ignore_errs=False):
         try:
-            data_dic = {
-                'uid': self.asset_uid,
-                'sn': self.clean_data['sn']}
-            models.Asset.objects.create(**data_dic)
+            self.field_verify(self.clean_data, 'model', str)
+            if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
+                data_dic = {
+                    'uid': self.asset_uid,
+                    'sn': self.clean_data['sn'],
+                    'model': self.clean_data.get('model'),
+                    'update_time': 0
+                }
+                obj = models.Server(data_dic)
+            return True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [asset] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
             return False
 
     def __create_server_info(self, ignore_errs=False):
@@ -179,7 +185,6 @@ class Handler(DataValidityCheck):
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
                 data_set = {
                     'asset': self.asset_uid,
-                    'model': self.clean_data.get('model'),
                     'raid_type': self.clean_data.get('raid_type'),
                     'os_type': self.clean_data.get('os_type'),
                     'os_distribution': self.clean_data.get('os_distribution'),
