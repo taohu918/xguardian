@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from userauth.models import UserProfile
+import datetime
 
 
 # Create your models here.
@@ -56,9 +57,7 @@ class Contract(models.Model):
         return self.name
 
 
-class ProductModel(models.Model):
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(unique=True, max_length=50, verbose_name=u'产品型号')
+class Manufactory(models.Model):
     manufactory = models.CharField(max_length=50, verbose_name=u'厂商名称')
     support_num = models.IntegerField(blank=True, null=True, verbose_name=u'支持电话')
     memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
@@ -67,7 +66,6 @@ class ProductModel(models.Model):
         return self.manufactory
 
     class Meta:
-        db_table = 'asset_product_model'
         verbose_name = u'厂商'
         verbose_name_plural = u"厂商"
 
@@ -92,24 +90,25 @@ class Server(models.Model):
     sn = models.CharField(max_length=50)
     name = models.CharField(max_length=50, blank=True, null=True)
     model = models.CharField(max_length=50, blank=True, null=True)
-    mip = models.CharField(max_length=50, blank=True, null=True)
-    product_model = models.ForeignKey('ProductModel', blank=True, null=True)
+
+    manufactory = models.ForeignKey('Manufactory', blank=True, null=True)
     business = models.ForeignKey('Business', blank=True, null=True, verbose_name=u'业务')
     idc = models.ForeignKey('IDC', blank=True, null=True, verbose_name=u'机房')
     contract = models.ForeignKey('Contract', blank=True, null=True, verbose_name=u'合同')
     admin = models.ForeignKey('userauth.UserProfile', blank=True, null=True, verbose_name=u'管理员')
 
-    expired_date = models.DateField(blank=True, null=True, default=0, verbose_name='过保日期')
-    hosted_on = models.GenericIPAddressField(max_length=32, blank=True, null=True, verbose_name='虚拟底层')
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
+    mip = models.CharField(max_length=50, blank=True, null=True)
+    hosted_on = models.GenericIPAddressField(blank=True, null=True, verbose_name='虚拟底层')
+    expired_date = models.DateField(blank=True, null=True, verbose_name='过保日期')
+    create_time = models.DateTimeField(blank=True, auto_now_add=True)
+    update_time = models.DateTimeField(blank=True, null=True, auto_now=True)
 
     class Meta:
         verbose_name = '服务器'
         verbose_name_plural = "服务器"
 
     def __unicode__(self):
-        return '%s sn:%s' % (self.asset.name, self.asset.sn)
+        return '%s sn:%s' % (self.name, self.sn)
 
 
 class TagAsset(models.Model):
@@ -142,12 +141,12 @@ class OS(models.Model):
 
 
 class CPU(models.Model):
-    uid = models.OneToOneField('Server', db_column='uid', unique=True)
+    asset_uid = models.OneToOneField('Server', unique=True)
     cpu_model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'CPU型号')
     physical_count = models.SmallIntegerField(u'物理cpu颗数')
     logic_count = models.SmallIntegerField(u'逻辑cpu核数')
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
+    create_time = models.DateTimeField(blank=True, auto_now_add=True)
+    update_time = models.DateTimeField(blank=True, auto_now=True)
 
     class Meta:
         verbose_name = 'CPU部件'
@@ -158,7 +157,7 @@ class CPU(models.Model):
 
 
 class RAM(models.Model):
-    uid = models.ForeignKey('Server', db_column='uid')
+    asset_uid = models.ForeignKey('Server')
     sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
     slot = models.IntegerField(u'插槽', blank=True, null=True)
@@ -187,12 +186,12 @@ class Disk(models.Model):
     uid = models.ForeignKey('Server', db_column='uid')
     sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'磁盘型号')
-    slot = models.SmallIntegerField(blank=True, null=True, verbose_name='插槽位')
-    capacity = models.SmallIntegerField(blank=True, null=True, verbose_name='磁盘容量GB')
+    slot = models.CharField(max_length=50, blank=True, null=True, verbose_name='插槽位')
+    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='磁盘容量GB')
     manufactory = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'制造商')
     iface_type = models.CharField(max_length=16, choices=disk_iface_choice, default='SAS', verbose_name=u'接口类型')
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
+    create_time = models.DateTimeField(blank=True, auto_now_add=True)
+    update_time = models.DateTimeField(blank=True, auto_now=True)
 
     auto_create_fields = ['sn', 'slot', 'manufactory', 'model', 'capacity', 'iface_type']
 

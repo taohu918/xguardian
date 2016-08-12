@@ -38,7 +38,6 @@ class DataValidityCheck(object):
         if data:
             try:
                 data = json.loads(data)
-                print(__file__, type(data), data)
                 self.mandatory_check(data)
                 self.clean_data = data
                 self.agent_asset_id = int(data['asset_id'])
@@ -51,24 +50,7 @@ class DataValidityCheck(object):
             self.response_msg('error', 'AssetDataInvalid', "The reported asset data is not valid or provided")
         return False
 
-    def response_msg(self, msg_type, key, msg):
-        """
-        :func  记录响应信息
-        :param msg_type -> 'error' 'info' 'warning'
-        :param key -> error overview
-        :param msg -> error content
-        """
-        if msg_type in self.response:
-            self.response[msg_type].append({key: msg})
-        else:
-            raise ValueError
-
-    def mandatory_check(self, data, only_check_sn=False):
-        """
-        :func  检查必须项
-        :param data
-        :param only_check_sn
-        """
+    def mandatory_check(self, data):
         for field in self.mandatory_fields:
             if field not in data:
                 self.response_msg(
@@ -78,6 +60,17 @@ class DataValidityCheck(object):
         else:
             if self.response['error']:
                 return False
+
+    def response_msg(self, msg_type, key, msg):
+        """
+        :param msg_type -> 'error' 'info' 'warning'
+        :param key -> error overview
+        :param msg -> error content
+        """
+        if msg_type in self.response:
+            self.response[msg_type].append({key: msg})
+        else:
+            raise ValueError
 
     def asset_type_existing(self):
         """
@@ -90,7 +83,7 @@ class DataValidityCheck(object):
 
     def field_verify(self, data_set, field_key, data_type, required=True):
         field_val = data_set.get(field_key)  # "model": "Latitude 3330"
-        if field_val:
+        if field_val or field_val == 0:
             try:
                 data_set[field_key] = data_type(field_val)
             except ValueError, e:
@@ -116,7 +109,6 @@ class DataValidityCheck(object):
 
         tmp_str = obj.hexdigest()[-4:].upper()
         self.asset_uid = self.clean_data['sn'] + '-00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
-        print(__file__, self.asset_uid)
 
         return self.asset_uid
 
@@ -142,14 +134,13 @@ class Handler(DataValidityCheck):
     def _create_asset_server(self, only_check_sn=False):
         self.generate_asset_uid()
         if self.asset_uid is None:
-            self.response_msg('error', 'AssetUidInvalid', 'generate asset id failed ! ')
+            self.response_msg('error', 'AssetUidInvalid', 'generate asset id is invalid ! ')
             return False
 
         self.__add_server_obj()
-        # self.__create_server_info()
-        # self.__create_or_update_manufactory()
-        # self.__create_cpu_component()
-        # self.__create_disk_component()
+        # self.__check_product_model()
+        # self.__add_cpu_component()
+        self.__add_disk_component()
         # self.__create_nic_component()
         # self.__create_ram_component()
 
@@ -170,73 +161,60 @@ class Handler(DataValidityCheck):
                     'uid': self.asset_uid,
                     'sn': self.clean_data['sn'],
                     'model': self.clean_data.get('model'),
-                    'update_time': 0
                 }
-                obj = models.Server(data_dic)
+                obj = models.Server(**data_dic)
+                obj.save()
+
+            self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
             return True
 
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
             return False
 
-    def __create_server_info(self, ignore_errs=False):
-        try:
-            self.field_verify(self.clean_data, 'model', str)
-            if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
-                data_set = {
-                    'asset': self.asset_uid,
-                    'raid_type': self.clean_data.get('raid_type'),
-                    'os_type': self.clean_data.get('os_type'),
-                    'os_distribution': self.clean_data.get('os_distribution'),
-                    'os_release': self.clean_data.get('os_release'),
-                    'approved_by': None,
-                    'host_on': None
-                }
-
-                models.Server.objects.create(**data_set)
-                return True
-        except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
-            return False
-
-    def __create_or_update_manufactory(self, ignore_errs=False):
+    def __check_product_model(self, ignore_errs=False):
         try:
             self.field_verify(self.clean_data, 'manufactory', str)
             manufactory = self.clean_data.get('manufactory')
             if not len(self.response['error']) or ignore_errs:
-                obj_exist = models.Manufactory.objects.filter(manufactory=manufactory)
-                if obj_exist:
-                    obj = obj_exist[0]
-                else:  # create a new one
-                    obj = models.Manufactory(manufactory=manufactory)
-                    obj.save()
-                self.asset_obj.manufactory = obj
+                obj = models.Manufactory.objects.filter(manufactory=manufactory)
+                if obj:
+                    this_obj = obj[0]
+                else:
+                    this_obj = models.Manufactory(manufactory=manufactory)
+                    this_obj.save()
+                self.asset_obj.manufactory = this_obj
                 self.asset_obj.save()
+                return True
+
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [manufactory] %s' % str(e))
+            return False
 
-    def __create_cpu_component(self, ignore_errs=False):
+    def __add_cpu_component(self, ignore_errs=False):
         try:
             self.field_verify(self.clean_data, 'model', str)
-            self.field_verify(self.clean_data, 'cpu_count', int)
-            self.field_verify(self.clean_data, 'cpu_core_count', int)
+            self.field_verify(self.clean_data, 'physical_count', int)
+            self.field_verify(self.clean_data, 'logic_count', int)
             if not len(self.response['error']) or ignore_errs:  # no processing when there's no error happend
                 data_set = {
-                    'asset_id': self.generate_asset_id,
+                    'asset_uid': self.asset_obj,
                     'cpu_model': self.clean_data.get('cpu_model'),
-                    'cpu_count': self.clean_data.get('cpu_count'),
-                    'cpu_core_count': self.clean_data.get('cpu_core_count'),
+                    'physical_count': self.clean_data.get('physical_count'),
+                    'logic_count': self.clean_data.get('logic_count'),
                 }
 
                 obj = models.CPU(**data_set)
                 obj.save()
                 log_msg = "Asset[%s] --> has added new [cpu] component with data [%s]" % (self.asset_obj, data_set)
                 self.response_msg('info', 'NewComponentAdded', log_msg)
-                return obj
+                return True
+
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [cpu] %s' % str(e))
+            return False
 
-    def __create_disk_component(self):
+    def __add_disk_component(self):
         disk_info = self.clean_data.get('physical_disk_driver')
         if disk_info:
             for disk_item in disk_info:
@@ -247,7 +225,7 @@ class Handler(DataValidityCheck):
                     self.field_verify(disk_item, 'model', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
-                            'asset_id': self.asset_obj.id,
+                            'asset_uid': self.asset_obj,
                             'sn': disk_item.get('sn'),
                             'slot': disk_item.get('slot'),
                             'capacity': disk_item.get('capacity'),
@@ -259,8 +237,11 @@ class Handler(DataValidityCheck):
                         obj = models.Disk(**data_set)
                         obj.save()
 
+                        return True
+
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [disk] %s' % str(e))
+                    return False
         else:
             self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
 

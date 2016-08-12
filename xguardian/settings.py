@@ -82,7 +82,7 @@ DATABASES = {
         'USER': 'xguardian',
         'PASSWORD': 'xguardian',
         'HOST': '172.16.81.62',
-        'PORT': 6612,
+        'PORT': 23006,
     }
 }
 

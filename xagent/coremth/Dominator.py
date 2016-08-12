@@ -40,7 +40,6 @@ class Mercurial(object):
     def report_data(self):
         obj = plugin_dispatcher.Collector()
         this_asset_data = obj.run()
-
         this_asset_data['kinds'] = settings.Params['kinds']
 
         this_asset_id = self.local_asset_id()
