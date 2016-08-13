@@ -160,14 +160,13 @@ class RAM(models.Model):
     asset_uid = models.ForeignKey('Server')
     sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
-    slot = models.IntegerField(u'插槽', blank=True, null=True)
+    slot = models.CharField(max_length=50, blank=True, null=True)
     capacity = models.IntegerField(u'内存大小(MB)', blank=True, null=True)
-    memo = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'备注')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s:%s:%s' % (self.uid, self.slot, self.capacity)
+        return '%s:%s:%s' % (self.asset_uid, self.slot, self.capacity)
 
     class Meta:
         verbose_name = 'RAM'
@@ -183,7 +182,7 @@ class Disk(models.Model):
         ('SCSI', 'SCSI'),
         ('SSD', 'SSD'),
     )
-    uid = models.ForeignKey('Server', db_column='uid')
+    asset_uid = models.ForeignKey('Server')
     sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'磁盘型号')
     slot = models.CharField(max_length=50, blank=True, null=True, verbose_name='插槽位')
@@ -205,7 +204,7 @@ class Disk(models.Model):
 
 
 class NIC(models.Model):
-    uid = models.ForeignKey('Server', db_column='uid')
+    asset_uid = models.ForeignKey('Server')
     sn = models.CharField(max_length=50, blank=True, null=True)
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡型号')
     name = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡名')
@@ -217,14 +216,14 @@ class NIC(models.Model):
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s:%s' % (self.uid, self.mac)
+        return '%s:%s' % (self.asset_uid, self.mac)
 
     class Meta:
         verbose_name = u'网卡'
         verbose_name_plural = u"网卡"
         # unique_together = ("asset_id", "slot")
 
-    auto_create_fields = ['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask', 'bonding']
+    auto_create_fields = ['name', 'sn', 'model', 'mac', 'ip', 'mask', 'bonding']
 
 
 class EventLog(models.Model):

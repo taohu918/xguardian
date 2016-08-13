@@ -92,6 +92,7 @@ class DataValidityCheck(object):
                     'InvalidField',
                     "The field [%s]'s data type is invalid, the correct data type should be [%s] " % (
                         field_key, data_type))
+                return False
 
         elif required:
             self.response_msg(
@@ -99,6 +100,7 @@ class DataValidityCheck(object):
                 'LackOfField',
                 "The field [%s] has no value provided in your reporting data [%s]" % (
                     field_key, data_set))
+            return False
 
     def generate_asset_uid(self):
         import hashlib
@@ -131,18 +133,18 @@ class Handler(DataValidityCheck):
         func = getattr(self, '_update_asset_%s_record' % types)
         func()
 
-    def _create_asset_server(self, only_check_sn=False):
+    def _create_asset_server(self):
         self.generate_asset_uid()
         if self.asset_uid is None:
             self.response_msg('error', 'AssetUidInvalid', 'generate asset id is invalid ! ')
             return False
 
         self.__add_server_obj()
-        # self.__check_product_model()
-        # self.__add_cpu_component()
+        self.__check_product_model()
+        self.__add_cpu_component()
         self.__add_disk_component()
-        # self.__create_nic_component()
-        # self.__create_ram_component()
+        self.__add_nic_component()
+        self.__add_ram_component()
 
         # if only_check_sn:
         #     self.server_obj = models.Server.objects.get(sn=self.clean_data['sn'])
@@ -153,7 +155,7 @@ class Handler(DataValidityCheck):
         #     self.server_obj.uid, self.server_obj)
         # self.response_msg('info', 'NewAssetOnline', log_msg)
 
-    def __add_server_obj(self, ignore_errs=False):
+    def __add_server_obj(self, ignore_errs=False, only_check_sn=False):
         try:
             self.field_verify(self.clean_data, 'model', str)
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
@@ -165,7 +167,10 @@ class Handler(DataValidityCheck):
                 obj = models.Server(**data_dic)
                 obj.save()
 
-            self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+            if only_check_sn:
+                self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+            else:
+                self.asset_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
             return True
 
         except Exception, e:
@@ -244,8 +249,9 @@ class Handler(DataValidityCheck):
                     return False
         else:
             self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
+            return False
 
-    def __create_nic_component(self):
+    def __add_nic_component(self):
         nic_info = self.clean_data.get('nic')
         if nic_info:
             for nic_item in nic_info:
@@ -253,25 +259,29 @@ class Handler(DataValidityCheck):
                     self.field_verify(nic_item, 'macaddress', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
-                            'asset_id': self.asset_obj.id,
+                            'asset_uid': self.asset_obj,
                             'name': nic_item.get('name'),
                             'sn': nic_item.get('sn'),
-                            'macaddress': nic_item.get('macaddress'),
-                            'ipaddress': nic_item.get('ipaddress'),
+                            'mac': nic_item.get('macaddress'),
+                            'ip': nic_item.get('ipaddress'),
                             'bonding': nic_item.get('bonding'),
                             'model': nic_item.get('model'),
-                            'netmask': nic_item.get('netmask'),
+                            'mask': nic_item.get('netmask'),
                         }
 
                         obj = models.NIC(**data_set)
                         obj.save()
+                        return True
 
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [nic] %s' % str(e))
+                    return False
+
         else:
             self.response_msg('error', 'LackOfData', 'NIC info is not provied in your reporting data')
+            return False
 
-    def __create_ram_component(self):
+    def __add_ram_component(self):
         ram_info = self.clean_data.get('ram')
         if ram_info:
             for ram_item in ram_info:
@@ -279,7 +289,7 @@ class Handler(DataValidityCheck):
                     self.field_verify(ram_item, 'capacity', int)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
-                            'asset_id': self.asset_obj.id,
+                            'asset_uid': self.asset_obj,
                             'slot': ram_item.get("slot"),
                             'sn': ram_item.get('sn'),
                             'capacity': ram_item.get('capacity'),
@@ -288,11 +298,15 @@ class Handler(DataValidityCheck):
 
                         obj = models.RAM(**data_set)
                         obj.save()
+                        return True
 
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [ram] %s' % str(e))
+                    return False
+
         else:
             self.response_msg('error', 'LackOfData', 'RAM info is not provied in your reporting data')
+            return False
 
     def _update_asset_server_record(self):
         """
