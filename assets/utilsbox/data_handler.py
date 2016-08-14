@@ -30,6 +30,7 @@ class DataValidityCheck(object):
         self.agent_asset_id = None
         self.asset_obj = None
         self.asset_uid = None
+        self.add_successful = False
 
     def data_is_valid(self):
         """校验数据是否可用"""
@@ -146,11 +147,6 @@ class Handler(DataValidityCheck):
         self.__add_nic_component()
         self.__add_ram_component()
 
-        # if only_check_sn:
-        #     self.server_obj = models.Server.objects.get(sn=self.clean_data['sn'])
-        # else:
-        #     self.server_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
-        #
         # log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
         #     self.server_obj.uid, self.server_obj)
         # self.response_msg('info', 'NewAssetOnline', log_msg)
@@ -166,16 +162,16 @@ class Handler(DataValidityCheck):
                 }
                 obj = models.Server(**data_dic)
                 obj.save()
+                self.add_successful = True
 
             if only_check_sn:
                 self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
             else:
                 self.asset_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
-            return True
 
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
-            return False
+            self.add_successful = False
 
     def __check_product_model(self, ignore_errs=False):
         try:
@@ -190,11 +186,11 @@ class Handler(DataValidityCheck):
                     this_obj.save()
                 self.asset_obj.manufactory = this_obj
                 self.asset_obj.save()
-                return True
+                self.add_successful = True
 
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [manufactory] %s' % str(e))
-            return False
+            self.add_successful = False
 
     def __add_cpu_component(self, ignore_errs=False):
         try:
@@ -213,11 +209,11 @@ class Handler(DataValidityCheck):
                 obj.save()
                 log_msg = "Asset[%s] --> has added new [cpu] component with data [%s]" % (self.asset_obj, data_set)
                 self.response_msg('info', 'NewComponentAdded', log_msg)
-                return True
+                self.add_successful = True
 
         except Exception, e:
             self.response_msg('error', 'ObjectCreationException', 'Object [cpu] %s' % str(e))
-            return False
+            self.add_successful = False
 
     def __add_disk_component(self):
         disk_info = self.clean_data.get('physical_disk_driver')
@@ -241,15 +237,14 @@ class Handler(DataValidityCheck):
 
                         obj = models.Disk(**data_set)
                         obj.save()
-
-                        return True
+                        self.add_successful = True
 
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [disk] %s' % str(e))
-                    return False
+                    self.add_successful = False
         else:
             self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
-            return False
+            self.add_successful = False
 
     def __add_nic_component(self):
         nic_info = self.clean_data.get('nic')
@@ -271,15 +266,15 @@ class Handler(DataValidityCheck):
 
                         obj = models.NIC(**data_set)
                         obj.save()
-                        return True
+                        self.add_successful = True
 
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [nic] %s' % str(e))
-                    return False
+                    self.add_successful = False
 
         else:
             self.response_msg('error', 'LackOfData', 'NIC info is not provied in your reporting data')
-            return False
+            self.add_successful = False
 
     def __add_ram_component(self):
         ram_info = self.clean_data.get('ram')
@@ -298,15 +293,15 @@ class Handler(DataValidityCheck):
 
                         obj = models.RAM(**data_set)
                         obj.save()
-                        return True
+                        self.add_successful = True
 
                 except Exception, e:
                     self.response_msg('error', 'ObjectCreationException', 'Object [ram] %s' % str(e))
-                    return False
+                    self.add_successful = False
 
         else:
             self.response_msg('error', 'LackOfData', 'RAM info is not provied in your reporting data')
-            return False
+            self.add_successful = False
 
     def _update_asset_server_record(self):
         """
