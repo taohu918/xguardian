@@ -8,7 +8,8 @@ import os
 import sys
 import json
 import plugin_dispatcher
-import urllib, urllib2
+import urllib
+import urllib2
 from conf import settings
 import token_generator
 
@@ -51,17 +52,18 @@ class Mercurial(object):
         # this_asset_data is a large dict, cover all hardware and software info
         data = {"asset_data": json.dumps(this_asset_data)}
         response = self.__submit_asset_data(data, method='post')
-        print(response)
+        # print(response)
 
     @staticmethod
     def local_asset_id(sn=None):
         local_asset_id_file = settings.Params['local_asset_id_file']
         if os.path.isfile(local_asset_id_file):
             local_asset_id = file(local_asset_id_file).read().strip()
-            if local_asset_id.isdigit():
-                return local_asset_id
-            else:
-                return False
+            return local_asset_id
+            # if local_asset_id.isdigit():
+            #     return local_asset_id
+            # else:
+            #     return False
         else:
             return False
 
@@ -74,9 +76,10 @@ class Mercurial(object):
                 data_encode = urllib.urlencode(data)
                 req = urllib2.Request(url=url, data=data_encode)
                 res_data = urllib2.urlopen(req, timeout=settings.Params['request_timeout'])
-                callback = res_data.read()
+                callback_msg = res_data.read()
                 print('\033[1;33m %s \033[0m' % __file__)
-                return callback
+                print type(callback_msg), callback_msg
+                self.write_uid_into_file(callback_msg)
             except Exception, e:
                 sys.exit("\033[31;1m%s\033[0m" % e)
 
@@ -92,7 +95,7 @@ class Mercurial(object):
                 req = urllib2.Request(url_with_asset_data)
                 req_data = urllib2.urlopen(req, timeout=settings.Params['request_timeout'])
                 callback = req_data.read()
-                print "-->server response:", callback
+                print "-->server response:", type(callable), callback
                 return callback
             except urllib2.URLError, e:
                 sys.exit("\033[31;1m%s\033[0m" % e)
@@ -112,3 +115,17 @@ class Mercurial(object):
             new_url = url + "?" + url_arg
 
         return new_url
+
+    def write_uid_into_file(self, asset_uid_from_server):
+        asset_uid = json.loads(asset_uid_from_server).get('asset_uid')
+        print type(asset_uid), asset_uid
+        if asset_uid:
+            try:
+                local_asset_id_file = settings.Params['local_asset_id_file']
+                local_asset_id = file(local_asset_id_file).read().strip()
+                if str(asset_uid) != str(local_asset_id):
+                    file_obj = open(local_asset_id_file, 'w')
+                    file_obj.write(asset_uid)
+                    file_obj.close()
+            except Exception, e:
+                print e

@@ -6,6 +6,7 @@
 # sys.setdefaultencoding("utf-8")
 import json
 from assets import models
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -131,7 +132,7 @@ class Handler(DataValidityCheck):
 
     # update asset server
     def update_method(self, types):
-        func = getattr(self, '_update_asset_%s_record' % types)
+        func = getattr(self, '_update_asset_%s' % types)
         func()
 
     def _create_asset_server(self):
@@ -146,6 +147,7 @@ class Handler(DataValidityCheck):
         self.__add_disk_component()
         self.__add_nic_component()
         self.__add_ram_component()
+        self.__add_os_component()
 
         # log_msg = "Asset [<a href='/admin/assets/asset/%s/' target='_blank'>%s</a>] has been created!" % (
         #     self.server_obj.uid, self.server_obj)
@@ -303,10 +305,34 @@ class Handler(DataValidityCheck):
             self.response_msg('error', 'LackOfData', 'RAM info is not provied in your reporting data')
             self.add_successful = False
 
-    def _update_asset_server_record(self):
+    def __add_os_component(self, ignore_errs=False):
+        try:
+            self.field_verify(self.clean_data, 'os_type', str)
+            self.field_verify(self.clean_data, 'os_distribution', str)
+            self.field_verify(self.clean_data, 'os_release', str)
+            if not len(self.response['error']) or ignore_errs:
+                data_set = {
+                    'asset_uid': self.asset_obj,
+                    'os_type': self.clean_data.get('os_type'),
+                    'os_distribution': self.clean_data.get('os_distribution'),
+                    'os_release': self.clean_data.get('os_release'),
+                }
+                obj = models.OS(**data_set)
+                obj.save()
+                log_msg = "Asset[%s] --> has added new [os] component with data [%s]" % (self.asset_obj, data_set)
+                self.response_msg('info', 'NewComponentAdded', log_msg)
+                self.add_successful = True
+
+        except Exception, e:
+            self.response_msg('error', 'ObjectCreationException', 'Object [os] %s' % str(e))
+            self.add_successful = False
+
+    def _update_asset_server(self):
         """
         update server record according to　data from agent
         """
+        self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+
         self.__update_asset_component(
             component_data=self.clean_data['nic'],
             fk='nic_set',
@@ -314,17 +340,19 @@ class Handler(DataValidityCheck):
             identify_field='macaddress'
         )
 
-        disk = self.__update_asset_component(component_data=self.clean_data['physical_disk_driver'],
-                                             fk='disk_set',
-                                             update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
-                                                            'iface_type'],
-                                             identify_field='slot'
-                                             )
-        ram = self.__update_asset_component(component_data=self.clean_data['ram'],
-                                            fk='ram_set',
-                                            update_fields=['slot', 'sn', 'model', 'capacity'],
-                                            identify_field='slot'
-                                            )
+        self.__update_asset_component(
+            component_data=self.clean_data['physical_disk_driver'],
+            fk='disk_set',
+            update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
+                           'iface_type'],
+            identify_field='slot'
+        )
+        self.__update_asset_component(
+            component_data=self.clean_data['ram'],
+            fk='ram_set',
+            update_fields=['slot', 'sn', 'model', 'capacity'],
+            identify_field='slot'
+        )
         cpu = self.__update_cpu_component()
         manufactory = self.__update_manufactory_component()
 
@@ -333,9 +361,10 @@ class Handler(DataValidityCheck):
     def __update_server_component(self):
         update_fields = ['model', 'raid_type', 'os_type', 'os_distribution', 'os_release']
         if hasattr(self.asset_obj, 'server'):
-            self.__compare_componet(model_obj=self.asset_obj.server,
-                                    fields_from_db=update_fields,
-                                    component_data=self.clean_data)
+            self.__compare_componet(
+                model_obj=self.asset_obj,
+                fields_from_db=update_fields,
+                data_source=self.clean_data)
         else:
             self.__create_server_info(ignore_errs=True)
 
@@ -400,3 +429,52 @@ class Handler(DataValidityCheck):
                 pass
         except ValueError, e:
             print '\033[41;1m%s\033[0m' % str(e)
+
+    def __compare_componet(self, model_obj, fields_from_db, data_source):
+        for field in fields_from_db:
+            val_from_db = getattr(model_obj, field)  # from db
+            val_from_agent = data_source.get(field)
+            if val_from_agent:
+                if str(val_from_db) != str(val_from_agent):
+                    db_field_obj = model_obj._meta.get_field(field)
+                    db_field_obj.save_form_data(model_obj, val_from_agent)
+                    model_obj.update_date = timezone.now()
+                    model_obj.save()
+                    log_msg = "Asset[%s] --> component[%s] --> field[%s] has changed from [%s] to [%s]" % (
+                        self.asset_obj, model_obj, field, val_from_db, val_from_agent)
+                    self.response_msg('info', 'FieldChanged', log_msg)
+                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg, model_obj)
+            else:
+                self.response_msg('warning', 'AssetUpdateWarning',
+                                  "Asset component [%s]'s field [%s] is not provided in reporting data " % (
+                                      model_obj, field))
+
+        model_obj.save()
+
+
+def log_handler(asset_obj, event_name, user, detail, component=None):
+    """(1,u'硬件变更'),
+        (2,u'新增配件'),
+        (3,u'设备下线'),
+        (4,u'设备上线')"""
+    log_catelog = {
+        1: ['FieldChanged', 'HardwareChanges'],
+        2: ['NewComponentAdded'],
+    }
+    if not user.id:
+        user = models.UserProfile.objects.filter(is_admin=True).last()
+    event_type = None
+    for k, v in log_catelog.items():
+        if event_name in v:
+            event_type = k
+            break
+    log_obj = models.EventLog(
+        name=event_name,
+        event_type=event_type,
+        asset_id=asset_obj.id,
+        component=component,
+        detail=detail,
+        user_id=user.id
+    )
+
+    log_obj.save()

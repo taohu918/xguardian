@@ -14,7 +14,7 @@ Params = {
     "port": 9000,
     'request_timeout': 30,
     "urls": "/asset/server/",
-    'local_asset_id_file': '%s/var/.asset_id' % BaseDir,
+    'local_asset_id_file': '%s/conf/.asset_id' % BaseDir,
     'log_file': '%s/logs/run_log' % BaseDir,
 
     'kinds': 'physics_machines',

@@ -127,10 +127,10 @@ class OS(models.Model):
         ('windows', 'Windows'),
         ('centos', 'CentOS'),
         ('ubuntu', 'Ubuntu'))
-    uid = models.CharField(primary_key=True, max_length=50)
-    os = models.CharField(choices=os_types_choice, max_length=50, default=1, verbose_name=u'系统类型')
-    model = models.CharField(choices=model_types_choices, max_length=50, default=1, verbose_name=u'软件/系统版本')
-    distribution = models.CharField(max_length=50, blank=True, null=True)
+    asset_uid = models.ForeignKey('Server')
+    os_type = models.CharField(choices=os_types_choice, max_length=50, default=1, verbose_name=u'系统类型')
+    os_distribution = models.CharField(choices=model_types_choices, max_length=50, default=1, verbose_name=u'软件/系统版本')
+    os_release = models.CharField(max_length=50, blank=True, null=True)
 
     def __unicode__(self):
         return self.version

@@ -9,6 +9,7 @@ from django.shortcuts import render, HttpResponse
 from rest_framework.views import APIView
 from utilsbox import decorations
 from utilsbox.data_handler import Handler
+import json
 
 
 class ServerReport(APIView):
@@ -18,7 +19,11 @@ class ServerReport(APIView):
         asset_handler = Handler(request)
         asset_handler.data_is_valid()
         asset_handler.data_incorporated()
-        return HttpResponse('ok')
+        if asset_handler.add_successful:
+            msg = json.dumps({'asset_uid': asset_handler.asset_uid})
+        else:
+            msg = json.dumps({'asset_uid': False})
+        return HttpResponse(msg)
 
     def get(self, request):
         pa = request.get_full_path()
