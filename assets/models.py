@@ -108,7 +108,7 @@ class Server(models.Model):
         verbose_name_plural = "服务器"
 
     def __unicode__(self):
-        return '%s sn:%s' % (self.name, self.sn)
+        return '%s sn:%s' % (self.uid, self.name)
 
 
 class TagAsset(models.Model):

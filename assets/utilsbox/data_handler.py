@@ -13,7 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 class DataValidityCheck(object):
     def __init__(self, request):
         self.request = request
-        self.mandatory_fields = ['sn', 'asset_id', 'asset_type', 'kinds']
+        self.mandatory_fields = ['sn', 'asset_uid', 'asset_type', 'kinds']
         self.field_sets = {
             'asset': ['manufactory'],
             'server': [
@@ -28,10 +28,11 @@ class DataValidityCheck(object):
         }
 
         self.clean_data = None
-        self.agent_asset_id = None
+        self.agent_asset_uid = None
         self.asset_obj = None
         self.asset_uid = None
         self.add_successful = False
+        self.update_successful = False
 
     def data_is_valid(self):
         """校验数据是否可用"""
@@ -42,7 +43,7 @@ class DataValidityCheck(object):
                 data = json.loads(data)
                 self.mandatory_check(data)
                 self.clean_data = data
-                self.agent_asset_id = int(data['asset_id'])
+                self.agent_asset_uid = int(data['asset_uid'])
                 if not self.response['error']:
                     return True
             except ValueError, e:
@@ -120,7 +121,7 @@ class DataValidityCheck(object):
 class Handler(DataValidityCheck):
     def data_incorporated(self):
         # if data_is_valid return True, then this func will be called.
-        if self.agent_asset_id == 0:
+        if self.agent_asset_uid == 0:
             self.create_method(self.clean_data['asset_type'])
         else:
             self.update_method(self.clean_data['asset_type'])
@@ -142,7 +143,7 @@ class Handler(DataValidityCheck):
             return False
 
         self.__add_server_obj()
-        self.__check_product_model()
+        self.__check_manufactory()
         self.__add_cpu_component()
         self.__add_disk_component()
         self.__add_nic_component()
@@ -175,7 +176,7 @@ class Handler(DataValidityCheck):
             self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
             self.add_successful = False
 
-    def __check_product_model(self, ignore_errs=False):
+    def __check_manufactory(self, ignore_errs=False):
         try:
             self.field_verify(self.clean_data, 'manufactory', str)
             manufactory = self.clean_data.get('manufactory')
@@ -328,45 +329,67 @@ class Handler(DataValidityCheck):
             self.add_successful = False
 
     def _update_asset_server(self):
-        """
-        update server record according to　data from agent
-        """
-        self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+        """ update server record according to　data from agent """
+        try:
+            self.asset_uid = self.clean_data['asset_uid']
+            self.__update_server_component()
 
-        self.__update_asset_component(
-            component_data=self.clean_data['nic'],
-            fk='nic_set',
-            update_fields=['name', 'sn', 'model', 'macaddress', 'ipaddress', 'netmask', 'bonding'],
-            identify_field='macaddress'
-        )
+            self.__update_asset_component(
+                component_data=self.clean_data['nic'],
+                fk='nic_set',
+                update_fields=['name', 'sn', 'model', 'mac', 'ip', 'mask', 'bonding'],
+                identify_field='mac'
+            )
 
-        self.__update_asset_component(
-            component_data=self.clean_data['physical_disk_driver'],
-            fk='disk_set',
-            update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
-                           'iface_type'],
-            identify_field='slot'
-        )
-        self.__update_asset_component(
-            component_data=self.clean_data['ram'],
-            fk='ram_set',
-            update_fields=['slot', 'sn', 'model', 'capacity'],
-            identify_field='slot'
-        )
-        cpu = self.__update_cpu_component()
-        manufactory = self.__update_manufactory_component()
+            self.__update_asset_component(
+                component_data=self.clean_data['physical_disk_driver'],
+                fk='disk_set',
+                update_fields=['slot', 'sn', 'model', 'manufactory', 'capacity',
+                               'iface_type'],
+                identify_field='slot'
+            )
+            self.__update_asset_component(
+                component_data=self.clean_data['ram'],
+                fk='ram_set',
+                update_fields=['slot', 'sn', 'model', 'capacity'],
+                identify_field='slot'
+            )
+            cpu = self.__update_cpu_component()
+            manufactory = self.__update_manufactory_component()
+            self.update_successful = True
 
-        server = self.__update_server_component()
+        except Exception, e:
+            self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
+            self.update_successful = False
 
     def __update_server_component(self):
-        update_fields = ['model', 'raid_type', 'os_type', 'os_distribution', 'os_release']
-        if hasattr(self.asset_obj, 'server'):
-            self.__compare_componet(
-                model_obj=self.asset_obj,
-                fields_from_db=update_fields,
-                data_source=self.clean_data)
-        else:
-            self.__create_server_info(ignore_errs=True)
+        update_fields = ['model', ]
+
+        self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+        self.__compare_componet(model_obj=self.asset_obj, fields_from_db=update_fields, data_source=self.clean_data)
+
+    def __compare_componet(self, model_obj, fields_from_db, data_source):
+        for field in fields_from_db:
+            val_from_db = getattr(model_obj, field)
+            val_from_agent = data_source.get(field)
+            if val_from_agent:
+                if str(val_from_db) != str(val_from_agent):
+                    # TODO: a special method
+                    db_field_obj = model_obj._meta.get_field(field)
+                    db_field_obj.save_form_data(model_obj, val_from_agent)
+                    model_obj.update_date = timezone.now()
+                    model_obj.save()
+                    log_msg = "Asset[%s]: component[%s]: field[%s] has changed from [%s] to [%s]" % (
+                        self.asset_obj, model_obj, field, val_from_db, val_from_agent)
+                    self.response_msg('info', 'FieldChanged', log_msg)
+                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg, model_obj)
+            else:
+                self.response_msg(
+                    'warning', 'AssetUpdateWarning',
+                    "Asset component [%s]'s field [%s] is not provided in reporting data " % (
+                        model_obj, field))
+
+        model_obj.save()
 
     def __update_asset_component(self, component_data, fk, update_fields, identify_field=None):
         """
@@ -375,11 +398,10 @@ class Handler(DataValidityCheck):
         update_fields: what fields in DB will be compared and updated
         identify_field: identify each component of an Asset , None means only use asset id to identify
         """
-        print component_data, update_fields, identify_field
         try:
             component_obj = getattr(self.asset_obj, fk)
-            if hasattr(component_obj, 'select_related'):  # this component is reverse m2m relation with Asset model
-                objects_from_db = component_obj.select_related()  # 取出这个资产对应的所有网卡信息
+            if hasattr(component_obj, 'select_related'):  # component is reverse m2m relation with server model
+                objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:
                     key_field_data = getattr(obj, identify_field)  # 获取mac....
                     # use this key_field_data to find the relative data source from reporting data
@@ -430,27 +452,6 @@ class Handler(DataValidityCheck):
         except ValueError, e:
             print '\033[41;1m%s\033[0m' % str(e)
 
-    def __compare_componet(self, model_obj, fields_from_db, data_source):
-        for field in fields_from_db:
-            val_from_db = getattr(model_obj, field)  # from db
-            val_from_agent = data_source.get(field)
-            if val_from_agent:
-                if str(val_from_db) != str(val_from_agent):
-                    db_field_obj = model_obj._meta.get_field(field)
-                    db_field_obj.save_form_data(model_obj, val_from_agent)
-                    model_obj.update_date = timezone.now()
-                    model_obj.save()
-                    log_msg = "Asset[%s] --> component[%s] --> field[%s] has changed from [%s] to [%s]" % (
-                        self.asset_obj, model_obj, field, val_from_db, val_from_agent)
-                    self.response_msg('info', 'FieldChanged', log_msg)
-                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg, model_obj)
-            else:
-                self.response_msg('warning', 'AssetUpdateWarning',
-                                  "Asset component [%s]'s field [%s] is not provided in reporting data " % (
-                                      model_obj, field))
-
-        model_obj.save()
-
 
 def log_handler(asset_obj, event_name, user, detail, component=None):
     """(1,u'硬件变更'),
@@ -471,7 +472,7 @@ def log_handler(asset_obj, event_name, user, detail, component=None):
     log_obj = models.EventLog(
         name=event_name,
         event_type=event_type,
-        asset_id=asset_obj.id,
+        asset_uid=asset_obj.uid,
         component=component,
         detail=detail,
         user_id=user.id
