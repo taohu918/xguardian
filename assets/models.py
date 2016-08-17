@@ -227,20 +227,10 @@ class NIC(models.Model):
 
 
 class EventLog(models.Model):
-    event_type_choices = (
-        (1, u'硬件变更'),
-        (2, u'新增配件'),
-        (3, u'设备下线'),
-        (4, u'设备上线'),
-        (5, u'定期维护'),
-        (6, u'业务上线\更新\变更'),
-        (7, u'其它'),
-    )
-    uid = models.ForeignKey('Server', db_column='uid')
+    asset_uid = models.ForeignKey('Server')
     user = models.ForeignKey('userauth.UserProfile', verbose_name=u'事件源')
-    name = models.CharField(max_length=128, verbose_name=u'事件名称')
-
-    event_type = models.SmallIntegerField(u'事件类型', choices=event_type_choices)
+    event_name = models.CharField(max_length=128, verbose_name=u'事件名称')
+    event_type = models.SmallIntegerField(u'事件类型', default=None)
     component = models.CharField(max_length=255, blank=True, null=True, verbose_name='事件子项')
     detail = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'事件详情')
     memo = models.CharField(max_length=255, blank=True, null=True)

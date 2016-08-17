@@ -43,7 +43,7 @@ class DataValidityCheck(object):
                 data = json.loads(data)
                 self.mandatory_check(data)
                 self.clean_data = data
-                self.agent_asset_uid = int(data['asset_uid'])
+                self.agent_asset_uid = str(data['asset_uid'])
                 if not self.response['error']:
                     return True
             except ValueError, e:
@@ -329,10 +329,13 @@ class Handler(DataValidityCheck):
             self.add_successful = False
 
     def _update_asset_server(self):
-        """ update server record according to　data from agent """
+        """ update server record according to data from agent """
         try:
             self.asset_uid = self.clean_data['asset_uid']
-            self.__update_server_component()
+            # self.__update_server_component()
+            update_fields = ['model', ]
+            self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+            self.__compare_componet(model_obj=self.asset_obj, fields_from_db=update_fields, data_source=self.clean_data)
 
             self.__update_asset_component(
                 component_data=self.clean_data['nic'],
@@ -341,6 +344,7 @@ class Handler(DataValidityCheck):
                 identify_field='mac'
             )
 
+            """
             self.__update_asset_component(
                 component_data=self.clean_data['physical_disk_driver'],
                 fk='disk_set',
@@ -355,7 +359,7 @@ class Handler(DataValidityCheck):
                 identify_field='slot'
             )
             cpu = self.__update_cpu_component()
-            manufactory = self.__update_manufactory_component()
+            manufactory = self.__update_manufactory_component()"""
             self.update_successful = True
 
         except Exception, e:
@@ -363,8 +367,8 @@ class Handler(DataValidityCheck):
             self.update_successful = False
 
     def __update_server_component(self):
+        """未使用"""
         update_fields = ['model', ]
-
         self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
         self.__compare_componet(model_obj=self.asset_obj, fields_from_db=update_fields, data_source=self.clean_data)
 
@@ -379,17 +383,18 @@ class Handler(DataValidityCheck):
                     db_field_obj.save_form_data(model_obj, val_from_agent)
                     model_obj.update_date = timezone.now()
                     model_obj.save()
-                    log_msg = "Asset[%s]: component[%s]: field[%s] has changed from [%s] to [%s]" % (
-                        self.asset_obj, model_obj, field, val_from_db, val_from_agent)
+                    log_msg = u"Table<%s> Field<%s> Changed: From '%s' to '%s' " % (
+                        'Server', field, val_from_db, val_from_agent)
                     self.response_msg('info', 'FieldChanged', log_msg)
-                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg, model_obj)
+                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg)
+                    self.update_successful = True
             else:
                 self.response_msg(
                     'warning', 'AssetUpdateWarning',
                     "Asset component [%s]'s field [%s] is not provided in reporting data " % (
                         model_obj, field))
 
-        model_obj.save()
+                # model_obj.save()
 
     def __update_asset_component(self, component_data, fk, update_fields, identify_field=None):
         """
@@ -403,7 +408,7 @@ class Handler(DataValidityCheck):
             if hasattr(component_obj, 'select_related'):  # component is reverse m2m relation with server model
                 objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:
-                    key_field_data = getattr(obj, identify_field)  # 获取mac....
+                    key_field_data = getattr(obj, identify_field)
                     # use this key_field_data to find the relative data source from reporting data
                     if type(component_data) is list:
                         for source_data_item in component_data:
@@ -419,11 +424,11 @@ class Handler(DataValidityCheck):
                                                       fk, identify_field))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
-                            print '\033[33;1mError:cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!\033[0m' % (
-                                key_field_data)
-                            self.response_msg("error", "AssetUpdateWarning",
-                                              "Cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!" % (
-                                                  key_field_data))
+                            self.response_msg(
+                                "error",
+                                "AssetUpdateWarning",
+                                "Cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!" % (
+                                    key_field_data))
                     elif type(component_data) is dict:  # dprecated...
                         for key, source_data_item in component_data.items():
                             key_field_data_from_source_data = source_data_item.get(identify_field)
@@ -454,28 +459,19 @@ class Handler(DataValidityCheck):
 
 
 def log_handler(asset_obj, event_name, user, detail, component=None):
-    """(1,u'硬件变更'),
-        (2,u'新增配件'),
-        (3,u'设备下线'),
-        (4,u'设备上线')"""
-    log_catelog = {
-        1: ['FieldChanged', 'HardwareChanges'],
-        2: ['NewComponentAdded'],
-    }
     if not user.id:
         user = models.UserProfile.objects.filter(is_admin=True).last()
-    event_type = None
-    for k, v in log_catelog.items():
-        if event_name in v:
-            event_type = k
-            break
-    log_obj = models.EventLog(
-        name=event_name,
-        event_type=event_type,
-        asset_uid=asset_obj.uid,
-        component=component,
-        detail=detail,
-        user_id=user.id
-    )
 
-    log_obj.save()
+    try:
+        log_obj = models.EventLog(
+            asset_uid=asset_obj,
+            event_name=event_name,
+            user_id=user.id,
+            detail=detail,
+            component=component)
+
+        log_obj.save()
+        return True
+    except Exception, e:
+        print e
+        return False
