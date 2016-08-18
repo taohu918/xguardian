@@ -121,7 +121,7 @@ class DataValidityCheck(object):
 class Handler(DataValidityCheck):
     def data_incorporated(self):
         # if data_is_valid return True, then this func will be called.
-        if self.agent_asset_uid == 0:
+        if self.agent_asset_uid == '0':
             self.create_method(self.clean_data['asset_type'])
         else:
             self.update_method(self.clean_data['asset_type'])
@@ -173,7 +173,7 @@ class Handler(DataValidityCheck):
                 self.asset_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException', '__add_server_obj: Object [server] %s' % str(e))
             self.add_successful = False
 
     def __check_manufactory(self, ignore_errs=False):
@@ -192,7 +192,8 @@ class Handler(DataValidityCheck):
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [manufactory] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException',
+                              '__check_manufactory: Object [manufactory] %s' % str(e))
             self.add_successful = False
 
     def __add_cpu_component(self, ignore_errs=False):
@@ -215,7 +216,7 @@ class Handler(DataValidityCheck):
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [cpu] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException', '__add_cpu_component: Object [cpu] %s' % str(e))
             self.add_successful = False
 
     def __add_disk_component(self):
@@ -243,7 +244,8 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException', 'Object [disk] %s' % str(e))
+                    self.response_msg('error', 'ObjectCreationException',
+                                      '__add_disk_component: Object [disk] %s' % str(e))
                     self.add_successful = False
         else:
             self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
@@ -272,7 +274,8 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException', 'Object [nic] %s' % str(e))
+                    self.response_msg('error', 'ObjectCreationException',
+                                      '__add_nic_component: Object [nic] %s' % str(e))
                     self.add_successful = False
 
         else:
@@ -299,7 +302,8 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException', 'Object [ram] %s' % str(e))
+                    self.response_msg('error', 'ObjectCreationException',
+                                      '__add_ram_component: Object [ram] %s' % str(e))
                     self.add_successful = False
 
         else:
@@ -325,7 +329,7 @@ class Handler(DataValidityCheck):
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [os] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException', '__add_os_component: Object [os] %s' % str(e))
             self.add_successful = False
 
     def _update_asset_server(self):
@@ -363,7 +367,7 @@ class Handler(DataValidityCheck):
             self.update_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', 'Object [server] %s' % str(e))
+            self.response_msg('error', 'ObjectCreationException', '_update_asset_server: Object [server] %s' % str(e))
             self.update_successful = False
 
     def __update_server_component(self):
@@ -468,7 +472,8 @@ def log_handler(asset_obj, event_name, user, detail, component=None):
             event_name=event_name,
             user_id=user.id,
             detail=detail,
-            component=component)
+            component=component,
+            memo=asset_obj.uid)
 
         log_obj.save()
         return True

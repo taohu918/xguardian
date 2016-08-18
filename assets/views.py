@@ -23,6 +23,7 @@ class ServerReport(APIView):
             msg = json.dumps({'asset_uid': asset_handler.asset_uid})
         else:
             msg = json.dumps({'asset_uid': False})
+        print asset_handler.response
         return HttpResponse(msg)
 
     def get(self, request):

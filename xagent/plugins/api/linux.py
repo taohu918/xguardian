@@ -179,8 +179,8 @@ class Main(DiskPlugin):
         # print('cpuinfo')
         raw_data = {
             'cpu_model': "cat /proc/cpuinfo | grep 'model name' | head -1 | awk -F':' '{print $2}'",
-            'cpu_count': "cat /proc/cpuinfo |grep  'processor'|wc -l ",
-            'cpu_core_count': "cat /proc/cpuinfo |grep 'cpu cores' |awk -F: '{SUM +=$2} END {print SUM}'",
+            'physical_count': "cat /proc/cpuinfo | grep 'physical id' | sort | uniq | wc -l",
+            'logic_count': "cat /proc/cpuinfo |grep  'processor'|wc -l ",
         }
 
         for k, cmd in raw_data.items():
