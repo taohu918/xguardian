@@ -206,7 +206,7 @@ class Disk(models.Model):
 class NIC(models.Model):
     asset_uid = models.ForeignKey('Server')
     sn = models.CharField(max_length=50, blank=True, null=True)
-    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡型号')
+    model = models.CharField(max_length=100, blank=True, null=True, verbose_name=u'网卡型号')
     name = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡名')
     ip = models.GenericIPAddressField(max_length=32, blank=True, null=True)
     mask = models.GenericIPAddressField(max_length=32, blank=True, null=True)

@@ -103,16 +103,16 @@ class Main(object):
         for nic in self.wmi_obj.Win32_NetworkAdapterConfiguration():
             item_data = {}
             if nic.MACAddress is not None:
-                item_data['macaddress'] = nic.MACAddress
+                item_data['mac'] = nic.MACAddress
                 item_data['model'] = nic.Caption
                 item_data['name'] = nic.Index
 
                 if nic.IPAddress is not None:
-                    item_data['ipaddress'] = nic.IPAddress[0]
+                    item_data['ip'] = nic.IPAddress[0]
                     item_data['netmask'] = nic.IPSubnet
                 else:
                     item_data['ipaddress'] = ''
-                    item_data['netmask'] = ''
+                    item_data['mask'] = ''
 
                 # bonding = 0
                 data.append(item_data)

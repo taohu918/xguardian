@@ -256,17 +256,17 @@ class Handler(DataValidityCheck):
         if nic_info:
             for nic_item in nic_info:
                 try:
-                    self.field_verify(nic_item, 'macaddress', str)
+                    self.field_verify(nic_item, 'mac', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
                             'asset_uid': self.asset_obj,
                             'name': nic_item.get('name'),
                             'sn': nic_item.get('sn'),
-                            'mac': nic_item.get('macaddress'),
-                            'ip': nic_item.get('ipaddress'),
+                            'mac': nic_item.get('mac'),
+                            'ip': nic_item.get('ip'),
                             'bonding': nic_item.get('bonding'),
                             'model': nic_item.get('model'),
-                            'mask': nic_item.get('netmask'),
+                            'mask': nic_item.get('mask'),
                         }
 
                         obj = models.NIC(**data_set)
@@ -408,7 +408,7 @@ class Handler(DataValidityCheck):
         identify_field: identify each component of an Asset , None means only use asset id to identify
         """
         try:
-            component_obj = getattr(self.asset_obj, fk)
+            component_obj = getattr(self.asset_obj, fk)  # 获取外键表对象
             if hasattr(component_obj, 'select_related'):  # component is reverse m2m relation with server model
                 objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:
@@ -419,13 +419,17 @@ class Handler(DataValidityCheck):
                             key_field_data_from_source_data = source_data_item.get(identify_field)
                             if key_field_data_from_source_data:
                                 if key_field_data == key_field_data_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
-                                    self.__compare_componet(model_obj=obj, fields_from_db=update_fields,
-                                                            component_data=source_data_item)
-                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this key_field_data, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
+                                    self.__compare_componet(
+                                        model_obj=obj,
+                                        fields_from_db=update_fields,
+                                        data_source=source_data_item)
+                                    break  # must break at last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this key_field_data, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
                             else:  # key field data from source data cannot be none
-                                self.response_msg('warning', 'AssetUpdateWarning',
-                                                  "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
-                                                      fk, identify_field))
+                                self.response_msg(
+                                    'warning',
+                                    'AssetUpdateWarning',
+                                    "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
+                                        fk, identify_field))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
