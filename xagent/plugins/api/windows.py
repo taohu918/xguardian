@@ -109,9 +109,9 @@ class Main(object):
 
                 if nic.IPAddress is not None:
                     item_data['ip'] = nic.IPAddress[0]
-                    item_data['netmask'] = nic.IPSubnet
+                    item_data['mask'] = nic.IPSubnet
                 else:
-                    item_data['ipaddress'] = ''
+                    item_data['ip'] = ''
                     item_data['mask'] = ''
 
                 # bonding = 0
