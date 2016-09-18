@@ -12,21 +12,18 @@
   </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="Python 2.7.8 (D:\IFLYTEK\Python\Python2.7\python.exe)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="xagent" />
     <orderEntry type="module" module-name="MadKing" />
     <orderEntry type="module" module-name="MadKing" />
     <orderEntry type="module" module-name="MadKing" />
     <orderEntry type="module" module-name="modules" />
-    <orderEntry type="module" module-name="algorithm" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
-    <option name="TEMPLATE_FOLDERS">
-      <list>
-        <option value="$MODULE_DIR$/../xguardian\templates" />
-      </list>
-    </option>
+  </component>
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
   </component>
 </module>

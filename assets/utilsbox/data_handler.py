@@ -336,10 +336,8 @@ class Handler(DataValidityCheck):
         """ update server record according to data from agent """
         try:
             self.asset_uid = self.clean_data['asset_uid']
-            # self.__update_server_component()
-            update_fields = ['model', ]
-            self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
-            self.__compare_componet(model_obj=self.asset_obj, fields_from_db=update_fields, data_source=self.clean_data)
+
+            self.__update_server_component()
 
             self.__update_asset_component(
                 component_data=self.clean_data['nic'],
@@ -371,22 +369,28 @@ class Handler(DataValidityCheck):
             self.update_successful = False
 
     def __update_server_component(self):
-        """未使用"""
         update_fields = ['model', ]
         self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
-        self.__compare_componet(model_obj=self.asset_obj, fields_from_db=update_fields, data_source=self.clean_data)
+        self.__compare_componet(model_obj=self.asset_obj, update_fields=update_fields, data_source=self.clean_data)
 
-    def __compare_componet(self, model_obj, fields_from_db, data_source):
-        for field in fields_from_db:
+    def __compare_componet(self, model_obj, update_fields, data_source):
+        """
+        :param model_obj: 需要进行对比的 model object
+        :param update_fields:
+        :param data_source:
+        :return:
+        """
+        for field in update_fields:  # base on data in mysql
             val_from_db = getattr(model_obj, field)
             val_from_agent = data_source.get(field)
             if val_from_agent:
                 if str(val_from_db) != str(val_from_agent):
-                    # TODO: a special method
+                    # TODO: a special method, update data in mysql.
                     db_field_obj = model_obj._meta.get_field(field)
                     db_field_obj.save_form_data(model_obj, val_from_agent)
                     model_obj.update_date = timezone.now()
                     model_obj.save()
+
                     log_msg = u"Table<%s> Field<%s> Changed: From '%s' to '%s' " % (
                         'Server', field, val_from_db, val_from_agent)
                     self.response_msg('info', 'FieldChanged', log_msg)
@@ -421,7 +425,7 @@ class Handler(DataValidityCheck):
                                 if key_field_data == key_field_data_from_agent_data:
                                     self.__compare_componet(
                                         model_obj=obj,
-                                        fields_from_db=update_fields,
+                                        update_fields=update_fields,
                                         data_source=agent_data_item)
                                     break
                                     # break here, or logic will goes for ..else part when the loop is finished,
