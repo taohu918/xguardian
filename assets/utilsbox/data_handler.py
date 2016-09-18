@@ -126,12 +126,10 @@ class Handler(DataValidityCheck):
         else:
             self.update_method(self.clean_data['asset_type'])
 
-    # create new asset (type: server)
     def create_method(self, types):
         func = getattr(self, '_create_asset_%s' % types)
         func()
 
-    # update asset server
     def update_method(self, types):
         func = getattr(self, '_update_asset_%s' % types)
         func()
@@ -416,42 +414,37 @@ class Handler(DataValidityCheck):
             if hasattr(component_obj, 'select_related'):  # component_obj is reverse m2m relation with server model
                 objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:  # obj 每条匹配的row对象
-                    key_field_data = getattr(obj, identify_field)
+                    field_data_from_db = getattr(obj, identify_field)
 
                     if type(component_data) is list:
                         for agent_data_item in component_data:
-                            key_field_data_from_agent_data = agent_data_item.get(identify_field, 'none')
-                            if key_field_data_from_agent_data:
-                                if key_field_data == key_field_data_from_agent_data:
+                            field_data_from_agent = agent_data_item.get(identify_field, 'none')
+                            if field_data_from_agent:
+                                if field_data_from_db == field_data_from_agent:
                                     self.__compare_componet(
                                         model_obj=obj,
                                         update_fields=update_fields,
                                         data_source=agent_data_item)
                                     break
-                                    # break here, or logic will goes for ..else part when the loop is finished,
-                                    # then you will know that no agent data is matched for by using this key_field_data
-                                    # means that item is lacked from agent data (makes sense when hardware info got changed)
-                                    # e.g: one of the RAM is broken, sb takes it away, then this data will not be reported
-
                             else:  # key field data from source data cannot be none
                                 self.response_msg(
                                     'warning', 'AssetUpdateWarning',
-                                    "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
-                                        fk, identify_field))
+                                    "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
+                                        fk, self.asset_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
                                 "error", "AssetUpdateWarning",
-                                "Cannot find any matches in agent data by key field val [%s]" % key_field_data)
+                                "Cannot find any matches in agent data by key field val [%s]" % field_data_from_db)
 
                     elif type(component_data) is dict:  # dprecated...
                         for key, agent_data_item in component_data.items():
-                            key_field_data_from_source_data = agent_data_item.get(identify_field)
-                            if key_field_data_from_source_data:
-                                if key_field_data == key_field_data_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
+                            field_data_from_db_from_source_data = agent_data_item.get(identify_field)
+                            if field_data_from_db_from_source_data:
+                                if field_data_from_db == field_data_from_db_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
                                     self.__compare_componet(model_obj=obj, fields_from_db=update_fields,
                                                             source_data=agent_data_item)
-                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this key_field_data, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
+                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this field_data_from_db, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
                             else:  # key field data from source data cannot be none
                                 self.response_msg('warning', 'AssetUpdateWarning',
                                                   "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
@@ -459,7 +452,7 @@ class Handler(DataValidityCheck):
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             print '\033[33;1mWarning:cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!\033[0m' % (
-                                key_field_data)
+                                field_data_from_db)
                     else:
                         print '\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m'
                         # compare all the components from DB with the data source from reporting data
