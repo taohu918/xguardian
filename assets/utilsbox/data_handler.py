@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # __author__: taohu
 
-# import sys
-# reload(sys)
-# sys.setdefaultencoding("utf-8")
 import json
 from assets import models
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+import sys
+
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 
 class DataValidityCheck(object):
@@ -340,11 +341,10 @@ class Handler(DataValidityCheck):
             self.__update_asset_component(
                 component_data=self.clean_data['nic'],
                 fk='nic_set',
-                update_fields=['name', 'sn', 'model', 'mac', 'ip', 'mask', 'bonding'],
+                update_fields=['sn', 'model', 'name', 'ip', 'mask', 'mac', 'bonding'],
                 identify_field='mac'
             )
 
-            """
             self.__update_asset_component(
                 component_data=self.clean_data['physical_disk_driver'],
                 fk='disk_set',
@@ -358,8 +358,8 @@ class Handler(DataValidityCheck):
                 update_fields=['slot', 'sn', 'model', 'capacity'],
                 identify_field='slot'
             )
-            cpu = self.__update_cpu_component()
-            manufactory = self.__update_manufactory_component()"""
+            # cpu = self.__update_cpu_component()
+            # manufactory = self.__update_manufactory_component()
             self.update_successful = True
 
         except Exception, e:
@@ -395,12 +395,9 @@ class Handler(DataValidityCheck):
                     log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg)
                     self.update_successful = True
             else:
-                self.response_msg(
-                    'warning', 'AssetUpdateWarning',
-                    "Asset component [%s]'s field [%s] is not provided in reporting data " % (
-                        model_obj, field))
-
-                # model_obj.save()
+                self.response_msg('warning', 'AssetUpdateWarning',
+                                  "Asset component [%s]'s field [%s] is not provided in reporting data " % (
+                                      model_obj, field))
 
     def __update_asset_component(self, component_data, fk, update_fields, identify_field=None):
         """
@@ -414,17 +411,17 @@ class Handler(DataValidityCheck):
             if hasattr(component_obj, 'select_related'):  # component_obj is reverse m2m relation with server model
                 objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:  # obj 每条匹配的row对象
-                    field_data_from_db = getattr(obj, identify_field)
+                    field_data_from_db = getattr(obj, identify_field)  # To obtain the value of the specified fields
 
                     if type(component_data) is list:
                         for agent_data_item in component_data:
                             field_data_from_agent = agent_data_item.get(identify_field, 'none')
                             if field_data_from_agent:
                                 if field_data_from_db == field_data_from_agent:
-                                    self.__compare_componet(
-                                        model_obj=obj,
-                                        update_fields=update_fields,
-                                        data_source=agent_data_item)
+                                    self.__compare_componet(model_obj=obj, update_fields=update_fields,
+                                                            data_source=agent_data_item)
+
+                                    component_data.remove(agent_data_item)  # 把本次匹配到的记录删除，避免重复循环
                                     break
                             else:  # key field data from source data cannot be none
                                 self.response_msg(
@@ -439,26 +436,24 @@ class Handler(DataValidityCheck):
 
                     elif type(component_data) is dict:  # dprecated...
                         for key, agent_data_item in component_data.items():
-                            field_data_from_db_from_source_data = agent_data_item.get(identify_field)
-                            if field_data_from_db_from_source_data:
-                                if field_data_from_db == field_data_from_db_from_source_data:  # find the matched source data for this component,then should compare each field in this component to see if there's any changes since last update
-                                    self.__compare_componet(model_obj=obj, fields_from_db=update_fields,
-                                                            source_data=agent_data_item)
-                                    break  # must break ast last ,then if the loop is finished , logic will goes for ..else part,then you will know that no source data is matched for by using this field_data_from_db, that means , this item is lacked from source data, it makes sense when the hardware info got changed. e.g: one of the RAM is broken, sb takes it away,then this data will not be reported in reporting data
+                            field_data_from_agent = agent_data_item.get(identify_field, 'none')
+                            if field_data_from_agent:
+                                if field_data_from_db == field_data_from_agent:
+                                    self.__compare_componet(model_obj=obj, update_fields=update_fields,
+                                                            data_source=agent_data_item)
+                                    break
                             else:  # key field data from source data cannot be none
-                                self.response_msg('warning', 'AssetUpdateWarning',
-                                                  "Asset component [%s]'s key field [%s] is not provided in reporting data " % (
-                                                      fk, identify_field))
+                                self.response_msg(
+                                    'warning', 'AssetUpdateWarning',
+                                    "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
+                                        fk, self.asset_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
-                            print '\033[33;1mWarning:cannot find any matches in source data by using key field val [%s],component data is missing in reporting data!\033[0m' % (
-                                field_data_from_db)
+                            self.response_msg(
+                                "error", "AssetUpdateWarning",
+                                "Cannot find any matches in agent data by key field val [%s]" % field_data_from_db)
                     else:
                         print '\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m'
-                        # compare all the components from DB with the data source from reporting data
-                        # self.__filter_add_or_deleted_components(model_obj_name=component_obj.model._meta.object_name,
-                        #                                         data_from_db=objects_from_db, data_source=component_data,
-                        #                                         identify_field=identify_field)
 
             else:  # this component is reverse fk relation with Asset model
                 pass
