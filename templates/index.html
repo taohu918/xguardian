@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+        <title>Title</title>
+    {% endblock %}
+
+    {% load staticfiles %}
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="{% static "css/3rd/bootstrap_v3.3.5/bootstrap.css" %}">
+    <link rel="stylesheet" href="{% static "css/src/navbar-fixed-top.css" %}">
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            {#            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"#}
+            {#                    data-target="#navbar" aria-expanded="false" aria-controls="navbar">#}
+            {#                <span class="sr-only">Toggle navigation</span>#}
+            {#                <span class="icon-bar"></span>#}
+            {#                <span class="icon-bar"></span>#}
+            {#                <span class="icon-bar"></span>#}
+            {#            </button>#}
+            <a class="navbar-brand" href="#">You Want You Konw</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="{% url 'index' %}">CMDB</a></li>
+                <li><a href="{% url 'category' 1 %}">数据库</a></li>
+                <li><a href="{% url 'category' 2 %}">自动化</a></li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span></a></li>
+
+                {% if request.user.is_authenticated %}
+                    <li class="dropdown">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                           aria-haspopup="true" aria-expanded="false">{{ request.user.userprofile.name }}
+                            <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            {#                            <li><a href="{% url 'article_new' %}">发帖</a></li>#}
+                            <li><a href="https://www.baidu.com">百度</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li class="dropdown-header">Nav header</li>
+                            <li><a href="{% url 'logout' %}">注销</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">注册\登录</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-2" style="margin-left: 10px;">
+            <ul class="nav nav-pills nav-stacked" role="tablist">
+                <li role="presentation" class="active"><a href="#">Home</a></li>
+                <li role="presentation"><a href="#">Profile</a></li>
+                <li role="presentation"><a href="#">Messages</a></li>
+            </ul>
+        </div>
+        <div class="col-xs-10">
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
