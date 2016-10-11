@@ -384,6 +384,7 @@ class Handler(DataValidityCheck):
             if val_from_agent:
                 if str(val_from_db) != str(val_from_agent):
                     # TODO: a special method, update data in mysql.
+                    # Retrieving a single field instance of a model by name
                     db_field_obj = model_obj._meta.get_field(field)
                     db_field_obj.save_form_data(model_obj, val_from_agent)
                     model_obj.update_date = timezone.now()

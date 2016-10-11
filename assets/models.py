@@ -7,7 +7,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from userauth.models import UserProfile
+# from userauth.models import UserProfile
 import datetime
 
 

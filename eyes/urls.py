@@ -10,7 +10,8 @@ import views
 
 urlpatterns = [
     url(r'index/$', views.index, name='index'),
-    url(r'login/', views.login, name='login'),
-    url(r'^category/(\d+)/$', views.category, name='category'),
+    url(r'login/$', views.account_login, name='login'),
+    url(r'logout/$', views.account_logout, name='logout'),
+    url(r'assets/$', views.assets),
     url(r'^$', views.index, name='index'),
 ]

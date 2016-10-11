@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="xagent" />
     <orderEntry type="module" module-name="modules" />
     <orderEntry type="module" module-name="career" />
-    <orderEntry type="module" module-name="MadKing" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

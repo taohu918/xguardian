@@ -27,7 +27,6 @@ class UserManager(BaseUserManager):
             # department=department,
             # tel=tel,
             # memo=memo,
-
         )
 
         user.set_password(password)

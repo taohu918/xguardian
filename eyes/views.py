@@ -1,4 +1,5 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+from django.contrib.auth import authenticate, login, logout
 
 
 # Create your views here.
@@ -6,16 +7,29 @@ from django.shortcuts import render, HttpResponse
 
 def index(request):
     xindex = 'hello world'
+    if request.user.is_authenticated:
+        print request.user.name
     return render(request, 'index.html', {'xindex': xindex})
 
 
-def login(request):
-    return HttpResponse('login')
+def account_login(request):
+    err_msg = ''
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return HttpResponseRedirect('/eyes/index/')
+        else:
+            err_msg = "Wrong username or password!"
+    return render(request, 'login.html', {'err_msg': err_msg})
 
 
-def logout(request):
-    return HttpResponse('logout')
+def account_logout(request):
+    logout(request)
+    return HttpResponseRedirect('/eyes/login/')
 
 
-def category(request):
-    return HttpResponse('category')
+def assets(request):
+    return render(request, 'assets.html')
