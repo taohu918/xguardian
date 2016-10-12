@@ -2,4 +2,8 @@
 
 {% block content %}
     I am assets.html
+    {% for i in data %}
+        <p>{{ i.uid }}--{{ i.sn }}--{{ i.model }}</p>
+    {% endfor %}
+    <div>{{ pagination|safe }}</div>
 {% endblock %}

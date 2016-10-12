@@ -49,7 +49,7 @@ class Mercurial(object):
         else:
             this_asset_data["asset_uid"] = 0
 
-        this_asset_data["model"] = 'l3330'
+        # this_asset_data["model"] = 'l3330'
 
         # this_asset_data is a large dict, cover all hardware and software info
         data = {"asset_data": json.dumps(this_asset_data)}

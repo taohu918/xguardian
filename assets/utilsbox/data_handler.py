@@ -48,10 +48,10 @@ class DataValidityCheck(object):
                 if not self.response['error']:
                     return True
             except ValueError, e:
-                self.response_msg('error', 'AssetDataInvalid', str(e))
+                self.response_msg('error', 'data_is_valid', str(e))
                 return False
         else:
-            self.response_msg('error', 'AssetDataInvalid', "The reported asset data is not valid or provided")
+            self.response_msg('error', 'data_is_valid', "The reported asset data is not valid or provided")
         return False
 
     def mandatory_check(self, data):
@@ -59,7 +59,7 @@ class DataValidityCheck(object):
             if field not in data:
                 self.response_msg(
                     'error',
-                    'MandatoryCheckFailed',
+                    'mandatory_check',
                     "Can not find [%s] in your reporting data" % field)
         else:
             if self.response['error']:
@@ -87,13 +87,13 @@ class DataValidityCheck(object):
 
     def field_verify(self, data_set, field_key, data_type, required=True):
         field_val = data_set.get(field_key)  # "model": "Latitude 3330"
-        if field_val or field_val == 0:
+        if field_val != 0:
             try:
                 data_set[field_key] = data_type(field_val)
             except ValueError, e:
                 self.response_msg(
                     'error',
-                    'InvalidField',
+                    'field_verify',
                     "The field [%s]'s data type is invalid, the correct data type should be [%s] " % (
                         field_key, data_type))
                 return False
@@ -115,7 +115,7 @@ class DataValidityCheck(object):
 
         tmp_str = obj.hexdigest()[-4:].upper()
         self.asset_uid = self.clean_data['sn'] + '-00' + '%s' % ord(tmp_str[0]) + tmp_str[1:]
-
+        self.asset_uid = obj.hexdigest().upper()
         return self.asset_uid
 
 
@@ -172,7 +172,7 @@ class Handler(DataValidityCheck):
                 self.asset_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', '__add_server_obj: Object [server] %s' % str(e))
+            self.response_msg('error', '__add_server_obj', 'Object [server] %s' % str(e))
             self.add_successful = False
 
     def __check_manufactory(self, ignore_errs=False):
@@ -191,8 +191,8 @@ class Handler(DataValidityCheck):
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException',
-                              '__check_manufactory: Object [manufactory] %s' % str(e))
+            self.response_msg('error', '__check_manufactory',
+                              'Object [manufactory] %s' % str(e))
             self.add_successful = False
 
     def __add_cpu_component(self, ignore_errs=False):
@@ -211,11 +211,11 @@ class Handler(DataValidityCheck):
                 obj = models.CPU(**data_set)
                 obj.save()
                 log_msg = "Asset[%s] --> has added new [cpu] component with data [%s]" % (self.asset_obj, data_set)
-                self.response_msg('info', 'NewComponentAdded', log_msg)
+                self.response_msg('info', '__add_cpu_component', log_msg)
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', '__add_cpu_component: Object [cpu] %s' % str(e))
+            self.response_msg('error', '__add_cpu_component', 'Object [cpu] %s' % str(e))
             self.add_successful = False
 
     def __add_disk_component(self):
@@ -223,8 +223,8 @@ class Handler(DataValidityCheck):
         if disk_info:
             for disk_item in disk_info:
                 try:
-                    self.field_verify(disk_item, 'slot', str)
-                    self.field_verify(disk_item, 'capacity', float)
+                    # self.field_verify(disk_item, 'slot', str)
+                    self.field_verify(disk_item, 'capacity', str)
                     self.field_verify(disk_item, 'iface_type', str)
                     self.field_verify(disk_item, 'model', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
@@ -243,11 +243,10 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException',
-                                      '__add_disk_component: Object [disk] %s' % str(e))
+                    self.response_msg('error', '__add_disk_component', 'Object [disk] %s' % str(e))
                     self.add_successful = False
         else:
-            self.response_msg('error', 'LackOfData', 'Disk info is not provied in your reporting data')
+            self.response_msg('error', '__add_disk_component', 'Disk info is not provied in your reporting data')
             self.add_successful = False
 
     def __add_nic_component(self):
@@ -273,12 +272,11 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException',
-                                      '__add_nic_component: Object [nic] %s' % str(e))
+                    self.response_msg('error', '__add_nic_component', 'Object [nic] %s' % str(e))
                     self.add_successful = False
 
         else:
-            self.response_msg('error', 'LackOfData', 'NIC info is not provied in your reporting data')
+            self.response_msg('error', '__add_nic_component', 'NIC info is not provied in your reporting data')
             self.add_successful = False
 
     def __add_ram_component(self):
@@ -286,7 +284,7 @@ class Handler(DataValidityCheck):
         if ram_info:
             for ram_item in ram_info:
                 try:
-                    self.field_verify(ram_item, 'capacity', int)
+                    self.field_verify(ram_item, 'capacity', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
                             'asset_uid': self.asset_obj,
@@ -301,12 +299,11 @@ class Handler(DataValidityCheck):
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', 'ObjectCreationException',
-                                      '__add_ram_component: Object [ram] %s' % str(e))
+                    self.response_msg('error', '__add_ram_component', 'Object [ram] %s' % str(e))
                     self.add_successful = False
 
         else:
-            self.response_msg('error', 'LackOfData', 'RAM info is not provied in your reporting data')
+            self.response_msg('error', '__add_ram_component', 'RAM info is not provied in your reporting data')
             self.add_successful = False
 
     def __add_os_component(self, ignore_errs=False):
@@ -324,11 +321,11 @@ class Handler(DataValidityCheck):
                 obj = models.OS(**data_set)
                 obj.save()
                 log_msg = "Asset[%s] --> has added new [os] component with data [%s]" % (self.asset_obj, data_set)
-                self.response_msg('info', 'NewComponentAdded', log_msg)
+                self.response_msg('info', '__add_os_component', log_msg)
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', '__add_os_component: Object [os] %s' % str(e))
+            self.response_msg('error', '__add_os_component', 'Object [os] %s' % str(e))
             self.add_successful = False
 
     def _update_asset_server(self):
@@ -363,7 +360,7 @@ class Handler(DataValidityCheck):
             self.update_successful = True
 
         except Exception, e:
-            self.response_msg('error', 'ObjectCreationException', '_update_asset_server: Object [server] %s' % str(e))
+            self.response_msg('error', '_update_asset_server', 'Object [server] %s' % str(e))
             self.update_successful = False
 
     def __update_server_component(self):
@@ -392,11 +389,11 @@ class Handler(DataValidityCheck):
 
                     log_msg = u"Table<%s> Field<%s> Changed: From '%s' to '%s' " % (
                         'Server', field, val_from_db, val_from_agent)
-                    self.response_msg('info', 'FieldChanged', log_msg)
+                    self.response_msg('info', '__compare_componet', log_msg)
                     log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg)
                     self.update_successful = True
             else:
-                self.response_msg('warning', 'AssetUpdateWarning',
+                self.response_msg('warning', '__compare_componet',
                                   "Asset component [%s]'s field [%s] is not provided in reporting data " % (
                                       model_obj, field))
 
@@ -426,13 +423,13 @@ class Handler(DataValidityCheck):
                                     break
                             else:  # key field data from source data cannot be none
                                 self.response_msg(
-                                    'warning', 'AssetUpdateWarning',
+                                    'warning', '__update_asset_component',
                                     "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
                                         fk, self.asset_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
-                                "error", "AssetUpdateWarning",
+                                "error", "__update_asset_component",
                                 "Cannot find any matches in agent data by key field val [%s]" % field_data_from_db)
 
                     elif type(component_data) is dict:  # dprecated...
@@ -445,13 +442,13 @@ class Handler(DataValidityCheck):
                                     break
                             else:  # key field data from source data cannot be none
                                 self.response_msg(
-                                    'warning', 'AssetUpdateWarning',
+                                    'warning', '__update_asset_component',
                                     "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
                                         fk, self.asset_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
-                                "error", "AssetUpdateWarning",
+                                "error", "__update_asset_component",
                                 "Cannot find any matches in agent data by key field val [%s]" % field_data_from_db)
                     else:
                         print '\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m'

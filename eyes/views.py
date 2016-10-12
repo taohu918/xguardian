@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+# __author__: taohu
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
+from assets import models
 
 
 # Create your views here.
@@ -7,8 +10,6 @@ from django.contrib.auth import authenticate, login, logout
 
 def index(request):
     xindex = 'hello world'
-    if request.user.is_authenticated:
-        print request.user.name
     return render(request, 'index.html', {'xindex': xindex})
 
 
@@ -31,5 +32,76 @@ def account_logout(request):
     return HttpResponseRedirect('/eyes/login/')
 
 
+# TODO: 分页
+class NumFactory(object):
+    page_total = 20
+
+    def __init__(self, page_id):
+        self.page_id = int(page_id)
+        self.page_show_num = NumFactory.page_total
+
+    # 内容条目
+    @property
+    def start(self):
+        return (self.page_id - 1) * self.page_show_num
+
+    @property
+    def end(self):
+        return self.page_id * self.page_show_num
+
+    def pagination(self, all_rows, url):
+        quotient, remainder = divmod(all_rows, self.page_show_num)
+
+        # 确定最后一页页码
+        if remainder > 0:
+            quotient += 1
+
+        # 确定起始页、结束页页码
+        if quotient <= 11:  # 总页数少于 11 时
+            start = 1
+            end = quotient
+        else:  # 总页数大于 11 时
+            if self.page_id < 6:
+                start = 1
+                end = 11
+            else:
+                start = self.page_id - 5
+                end = self.page_id + 5
+                if end > quotient:
+                    end = quotient
+                    start = quotient - 11
+
+        paginate = ''
+        for i in range(start, end + 1):  # end + 1, 否则分页码少一
+            if i == self.page_id:
+                temp = "<li class='active'><a href='%s%s'>%s<span class='sr-only'>(current)</span></a></li>" \
+                       % (url, i, i)
+            else:
+                temp = "<li><a href='%s%s'>%s</a></li>" % (url, i, i)
+            paginate += temp
+
+        if self.page_id > 1:
+            last_page = "<li><a href='%s%s'>&laquo;</a><li>" % (url, self.page_id - 1)
+        else:
+            last_page = "<li><a href='javascript:void(0)'>&laquo;</a></li>"
+
+        if self.page_id >= quotient:
+            next_page = "<li><a href='javascript:void(0)'>&raquo;</a></li>"
+        else:
+            next_page = "<li><a href='%s%s'>&raquo;</a></li>" % (url, self.page_id + 1)
+
+        paginate = "<nav> <ul class='pagination'>" + last_page + paginate + next_page + "</ul> </nav>"
+        return paginate
+
+
 def assets(request):
-    return render(request, 'assets.html')
+    page_id = request.GET.get('pid', 1)
+    model_obj = models.Server.objects.all()
+    page_obj = NumFactory(page_id)
+    data = model_obj[page_obj.start:page_obj.end]
+    all_rows = model_obj.count()
+
+    # data = range(200)[page_obj.start:page_obj.end]
+    all_rows = 200
+    paginations = page_obj.pagination(all_rows, '/eyes/assets/?pid=')
+    return render(request, 'assets.html', {'data': data, 'pagination': paginations})

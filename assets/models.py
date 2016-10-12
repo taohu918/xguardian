@@ -86,8 +86,8 @@ class Server(models.Model):
         ('auto', 'Auto'),
         ('manual', 'Manual'),
     )
-    uid = models.CharField(primary_key=True, max_length=50)
-    sn = models.CharField(max_length=50)
+    uid = models.CharField(primary_key=True, max_length=100)
+    sn = models.CharField(max_length=100)
     name = models.CharField(max_length=50, blank=True, null=True)
     model = models.CharField(max_length=50, blank=True, null=True)
 
@@ -161,7 +161,7 @@ class RAM(models.Model):
     sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
     slot = models.CharField(max_length=50, blank=True, null=True)
-    capacity = models.IntegerField(u'内存大小(MB)', blank=True, null=True)
+    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='内存大小')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
@@ -209,7 +209,7 @@ class NIC(models.Model):
     model = models.CharField(max_length=100, blank=True, null=True, verbose_name=u'网卡型号')
     name = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡名')
     ip = models.GenericIPAddressField(max_length=32, blank=True, null=True)
-    mask = models.GenericIPAddressField(max_length=32, blank=True, null=True)
+    mask = models.GenericIPAddressField(max_length=64, blank=True, null=True)
     mac = models.CharField(max_length=32, unique=True, verbose_name=u'MAC')
     bonding = models.CharField(max_length=8, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True)

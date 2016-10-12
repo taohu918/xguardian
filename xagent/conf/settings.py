@@ -11,7 +11,7 @@ BaseDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 Params = {
     "server": "127.0.0.1",
-    "port": 9000,
+    "port": 9090,
     'request_timeout': 30,
     "urls": "/asset/server/",
     'local_asset_id_file': '%s/conf/.asset_id' % BaseDir,

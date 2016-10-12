@@ -141,12 +141,12 @@ class Main(DiskPlugin):
                 if mac_addr not in nic_dic:
                     nic_dic[mac_addr] = {
                         'name': nic_name,
-                        'macaddress': mac_addr,
-                        'netmask': netmask,
+                        'mac': mac_addr,
+                        'mask': netmask,
                         'network': network,
                         'bonding': 0,
                         'model': 'unknown',
-                        'ipaddress': ip_addr,
+                        'ip': ip_addr,
                     }
                 else:  # mac already exist , must be boding address
                     if '%s_bonding_addr' % mac_addr not in nic_dic:
@@ -156,12 +156,12 @@ class Main(DiskPlugin):
 
                     nic_dic[random_mac_addr] = {
                         'name': nic_name,
-                        'macaddress': random_mac_addr,
-                        'netmask': netmask,
+                        'mac': random_mac_addr,
+                        'mask': netmask,
                         'network': network,
                         'bonding': 1,
                         'model': 'unknown',
-                        'ipaddress': ip_addr,
+                        'ip': ip_addr,
                     }
 
             if "HWaddr" in line:
