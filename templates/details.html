@@ -1,0 +1,16 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <ol class="breadcrumb">
+        <li><a href="/eyes/details/{{ asset.uid }}">资产详情</a></li>
+        <li><a href="#">硬件信息</a></li>
+    </ol>
+    <div class="row">
+        <div class="col-xs-5">
+            hello left
+        </div>
+        <div class="col-xs-offset-1 col-xs-5">
+            hello right
+        </div>
+    </div>
+{% endblock %}

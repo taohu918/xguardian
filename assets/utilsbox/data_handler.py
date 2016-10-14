@@ -4,6 +4,7 @@
 import json
 from assets import models
 from django.utils import timezone
+from userauth.models import UserProfile
 from django.core.exceptions import ObjectDoesNotExist
 import sys
 
@@ -14,7 +15,7 @@ sys.setdefaultencoding("utf-8")
 class DataValidityCheck(object):
     def __init__(self, request):
         self.request = request
-        self.mandatory_fields = ['sn', 'asset_uid', 'asset_type', 'kinds']
+        self.mandatory_keys = ['sn', 'asset_uid', 'asset_type', 'kinds']
         self.field_sets = {
             'asset': ['manufactory'],
             'server': [
@@ -29,11 +30,13 @@ class DataValidityCheck(object):
         }
 
         self.clean_data = None
-        self.agent_asset_uid = None
-        self.asset_obj = None
+        self.agent_asset_uid = None  # agent 采集的资产 uid
+        self.server_obj = None
         self.asset_uid = None
         self.add_successful = False
         self.update_successful = False
+        self.kinds = None  # 资产类型：物理机、虚拟机
+        self.data_validation = self.data_is_valid()
 
     def data_is_valid(self):
         """校验数据是否可用"""
@@ -45,6 +48,7 @@ class DataValidityCheck(object):
                 self.mandatory_check(data)
                 self.clean_data = data
                 self.agent_asset_uid = str(data['asset_uid'])
+                self.kinds = str(data['kinds'])
                 if not self.response['error']:
                     return True
             except ValueError, e:
@@ -55,12 +59,12 @@ class DataValidityCheck(object):
         return False
 
     def mandatory_check(self, data):
-        for field in self.mandatory_fields:
-            if field not in data:
+        for key in self.mandatory_keys:
+            if key not in data:
                 self.response_msg(
                     'error',
                     'mandatory_check',
-                    "Can not find [%s] in your reporting data" % field)
+                    "Can't find key<%s> in reporting data" % key)
         else:
             if self.response['error']:
                 return False
@@ -80,12 +84,12 @@ class DataValidityCheck(object):
         """
         :func  ensure data from agent contains asset_type
         """
-        if not hasattr(self.asset_obj, self.clean_data['asset_type']):
+        if not hasattr(self.server_obj, self.clean_data['asset_type']):
             return True
         else:
             return False
 
-    def field_verify(self, data_set, field_key, data_type, required=True):
+    def field_verify(self, data_set, field_key, data_type, required=True, mth=None):
         field_val = data_set.get(field_key)  # "model": "Latitude 3330"
         if field_val != 0:
             try:
@@ -93,17 +97,15 @@ class DataValidityCheck(object):
             except ValueError, e:
                 self.response_msg(
                     'error',
-                    'field_verify',
-                    "The field [%s]'s data type is invalid, the correct data type should be [%s] " % (
-                        field_key, data_type))
+                    mth,
+                    "Data type of field<%s> isn't [%s], plz check " % (field_key, data_type))
                 return False
 
-        elif required:
+        elif required:  # 如果为必须需要字段
             self.response_msg(
                 'error',
-                'LackOfField',
-                "The field [%s] has no value provided in your reporting data [%s]" % (
-                    field_key, data_set))
+                mth,
+                "No value provided for field<%s> in reporting data [%s]" % (field_key, data_set))
             return False
 
     def generate_asset_uid(self):
@@ -122,10 +124,11 @@ class DataValidityCheck(object):
 class Handler(DataValidityCheck):
     def data_incorporated(self):
         # if data_is_valid return True, then this func will be called.
-        if self.agent_asset_uid == '0':
-            self.create_method(self.clean_data['asset_type'])
-        else:
-            self.update_method(self.clean_data['asset_type'])
+        if self.data_validation:
+            if self.agent_asset_uid == '0':
+                self.create_method(self.clean_data['asset_type'])
+            else:
+                self.update_method(self.clean_data['asset_type'])
 
     def create_method(self, types):
         func = getattr(self, '_create_asset_%s' % types)
@@ -138,7 +141,7 @@ class Handler(DataValidityCheck):
     def _create_asset_server(self):
         self.generate_asset_uid()
         if self.asset_uid is None:
-            self.response_msg('error', 'AssetUidInvalid', 'generate asset id is invalid ! ')
+            self.response_msg('error', '_create_asset_server', 'generate_asset_uid() failed.')
             return False
 
         self.__add_server_obj()
@@ -155,54 +158,65 @@ class Handler(DataValidityCheck):
 
     def __add_server_obj(self, ignore_errs=False, only_check_sn=False):
         try:
-            self.field_verify(self.clean_data, 'model', str)
+            if models.Server.objects.filter(uid=self.asset_uid):
+                self.response_msg('error', '__add_server_obj', u'资产uid已存在 %s' % self.asset_uid)
+                print u'资产uid已存在 %s' % self.asset_uid
+
+            self.field_verify(self.clean_data, 'model', str, mth='__add_server_obj')
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
                 data_dic = {
                     'uid': self.asset_uid,
                     'sn': self.clean_data['sn'],
                     'model': self.clean_data.get('model'),
+                    'hosted': self.clean_data.get('hosted'),
                 }
                 obj = models.Server(**data_dic)
                 obj.save()
+
+                log_msg = "Asset<%s> add new [server] record ." % self.asset_uid
+                self.response_msg('info', '__add_server_obj', log_msg)
+
                 self.add_successful = True
 
             if only_check_sn:
-                self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
+                self.server_obj = models.Server.objects.get(uid=self.asset_uid)
             else:
-                self.asset_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
+                self.server_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
 
         except Exception, e:
-            self.response_msg('error', '__add_server_obj', 'Object [server] %s' % str(e))
+            self.response_msg('error', '__add_server_obj', str(e))
             self.add_successful = False
 
     def __check_manufactory(self, ignore_errs=False):
         try:
-            self.field_verify(self.clean_data, 'manufactory', str)
+            self.field_verify(self.clean_data, 'manufactory', str, mth='__check_manufactory')
             manufactory = self.clean_data.get('manufactory')
             if not len(self.response['error']) or ignore_errs:
+                # 从现有数据库中检查生产厂商是否存在
                 obj = models.Manufactory.objects.filter(manufactory=manufactory)
                 if obj:
                     this_obj = obj[0]
                 else:
                     this_obj = models.Manufactory(manufactory=manufactory)
                     this_obj.save()
-                self.asset_obj.manufactory = this_obj
-                self.asset_obj.save()
+
+                # 更新 server 表的对应字段（不能直接更新，需要使用表 Manufactory 的对象）
+                self.server_obj.manufactory = this_obj
+                self.server_obj.save()
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', '__check_manufactory',
-                              'Object [manufactory] %s' % str(e))
+            self.response_msg('error', '__check_manufactory', str(e))
             self.add_successful = False
 
     def __add_cpu_component(self, ignore_errs=False):
         try:
-            self.field_verify(self.clean_data, 'model', str)
-            self.field_verify(self.clean_data, 'physical_count', int)
-            self.field_verify(self.clean_data, 'logic_count', int)
-            if not len(self.response['error']) or ignore_errs:  # no processing when there's no error happend
+            self.field_verify(self.clean_data, 'model', str, mth='__add_cpu_component')
+            self.field_verify(self.clean_data, 'physical_count', int, mth='__add_cpu_component')
+            self.field_verify(self.clean_data, 'logic_count', int, mth='__add_cpu_component')
+            if not len(self.response['error']) or ignore_errs:
                 data_set = {
-                    'asset_uid': self.asset_obj,
+                    'asset_uid': self.server_obj,
                     'cpu_model': self.clean_data.get('cpu_model'),
                     'physical_count': self.clean_data.get('physical_count'),
                     'logic_count': self.clean_data.get('logic_count'),
@@ -210,12 +224,14 @@ class Handler(DataValidityCheck):
 
                 obj = models.CPU(**data_set)
                 obj.save()
-                log_msg = "Asset[%s] --> has added new [cpu] component with data [%s]" % (self.asset_obj, data_set)
+
+                log_msg = "Asset<%s> add new [cpu] record with data [%s]" % (self.asset_uid, data_set)
                 self.response_msg('info', '__add_cpu_component', log_msg)
+
                 self.add_successful = True
 
         except Exception, e:
-            self.response_msg('error', '__add_cpu_component', 'Object [cpu] %s' % str(e))
+            self.response_msg('error', '__add_cpu_component', str(e))
             self.add_successful = False
 
     def __add_disk_component(self):
@@ -223,27 +239,47 @@ class Handler(DataValidityCheck):
         if disk_info:
             for disk_item in disk_info:
                 try:
-                    # self.field_verify(disk_item, 'slot', str)
-                    self.field_verify(disk_item, 'capacity', str)
-                    self.field_verify(disk_item, 'iface_type', str)
-                    self.field_verify(disk_item, 'model', str)
-                    if not len(self.response['error']):  # no processing when there's no error happend
-                        data_set = {
-                            'asset_uid': self.asset_obj,
-                            'sn': disk_item.get('sn'),
-                            'slot': disk_item.get('slot'),
-                            'capacity': disk_item.get('capacity'),
-                            'model': disk_item.get('model'),
-                            'iface_type': disk_item.get('iface_type'),
-                            'manufactory': disk_item.get('manufactory'),
-                        }
+                    if self.kinds == 'physics_machines':
+                        self.field_verify(disk_item, 'slot', str, mth='__add_disk_component')
+                        self.field_verify(disk_item, 'capacity', str, mth='__add_disk_component')
+                        self.field_verify(disk_item, 'iface_type', str, mth='__add_disk_component')
+                        self.field_verify(disk_item, 'model', str, mth='__add_disk_component')
+                        if not len(self.response['error']):  # no processing when there's no error happend
+                            data_set = {
+                                'asset_uid': self.server_obj,
+                                'sn': disk_item.get('sn'),
+                                'slot': disk_item.get('slot'),
+                                'capacity': disk_item.get('capacity'),
+                                'model': disk_item.get('model'),
+                                'iface_type': disk_item.get('iface_type'),
+                                'manufactory': disk_item.get('manufactory'),
+                            }
 
-                        obj = models.Disk(**data_set)
-                        obj.save()
-                        self.add_successful = True
+                            obj = models.Disk(**data_set)
+                            obj.save()
+
+                            log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
+                            self.response_msg('info', '__add_disk_component', log_msg)
+
+                            self.add_successful = True
+
+                    else:
+                        if not len(self.response['error']):  # no processing when there's no error happend
+                            data_set = {
+                                'asset_uid': self.server_obj,
+                                'capacity': disk_item.get('capacity'),
+                            }
+
+                            obj = models.Disk(**data_set)
+                            obj.save()
+
+                            log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
+                            self.response_msg('info', '__add_disk_component', log_msg)
+
+                            self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', '__add_disk_component', 'Object [disk] %s' % str(e))
+                    self.response_msg('error', '__add_disk_component', str(e))
                     self.add_successful = False
         else:
             self.response_msg('error', '__add_disk_component', 'Disk info is not provied in your reporting data')
@@ -257,7 +293,7 @@ class Handler(DataValidityCheck):
                     self.field_verify(nic_item, 'mac', str)
                     if not len(self.response['error']):  # no processing when there's no error happend
                         data_set = {
-                            'asset_uid': self.asset_obj,
+                            'asset_uid': self.server_obj,
                             'name': nic_item.get('name'),
                             'sn': nic_item.get('sn'),
                             'mac': nic_item.get('mac'),
@@ -269,10 +305,14 @@ class Handler(DataValidityCheck):
 
                         obj = models.NIC(**data_set)
                         obj.save()
+
+                        log_msg = "Asset<%s> add new [nic] record with data [%s]" % (self.asset_uid, data_set)
+                        self.response_msg('info', '__add_nic_component', log_msg)
+
                         self.add_successful = True
 
                 except Exception, e:
-                    self.response_msg('error', '__add_nic_component', 'Object [nic] %s' % str(e))
+                    self.response_msg('error', '__add_nic_component', str(e))
                     self.add_successful = False
 
         else:
@@ -284,19 +324,37 @@ class Handler(DataValidityCheck):
         if ram_info:
             for ram_item in ram_info:
                 try:
-                    self.field_verify(ram_item, 'capacity', str)
-                    if not len(self.response['error']):  # no processing when there's no error happend
-                        data_set = {
-                            'asset_uid': self.asset_obj,
-                            'slot': ram_item.get("slot"),
-                            'sn': ram_item.get('sn'),
-                            'capacity': ram_item.get('capacity'),
-                            'model': ram_item.get('model'),
-                        }
+                    if self.kinds == 'physics_machines':
+                        self.field_verify(ram_item, 'capacity', str)
+                        if not len(self.response['error']):  # no processing when there's no error happend
+                            data_set = {
+                                'asset_uid': self.server_obj,
+                                'slot': ram_item.get("slot"),
+                                'sn': ram_item.get('sn'),
+                                'capacity': ram_item.get('capacity'),
+                                'model': ram_item.get('model'),
+                            }
+                            obj = models.RAM(**data_set)
+                            obj.save()
 
-                        obj = models.RAM(**data_set)
-                        obj.save()
-                        self.add_successful = True
+                            log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
+                            self.response_msg('info', '__add_ram_component', log_msg)
+
+                            self.add_successful = True
+
+                    else:
+                        if not len(self.response['error']):
+                            data_set = {
+                                'asset_uid': self.server_obj,
+                                'model': ram_item.get('model'),
+                            }
+                            obj = models.RAM(**data_set)
+                            obj.save()
+
+                            log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
+                            self.response_msg('info', '__add_ram_component', log_msg)
+
+                            self.add_successful = True
 
                 except Exception, e:
                     self.response_msg('error', '__add_ram_component', 'Object [ram] %s' % str(e))
@@ -313,15 +371,17 @@ class Handler(DataValidityCheck):
             self.field_verify(self.clean_data, 'os_release', str)
             if not len(self.response['error']) or ignore_errs:
                 data_set = {
-                    'asset_uid': self.asset_obj,
+                    'asset_uid': self.server_obj,
                     'os_type': self.clean_data.get('os_type'),
                     'os_distribution': self.clean_data.get('os_distribution'),
                     'os_release': self.clean_data.get('os_release'),
                 }
                 obj = models.OS(**data_set)
                 obj.save()
-                log_msg = "Asset[%s] --> has added new [os] component with data [%s]" % (self.asset_obj, data_set)
+
+                log_msg = "Asset<%s> add new [os] record with data [%s]" % (self.asset_uid, data_set)
                 self.response_msg('info', '__add_os_component', log_msg)
+
                 self.add_successful = True
 
         except Exception, e:
@@ -365,8 +425,8 @@ class Handler(DataValidityCheck):
 
     def __update_server_component(self):
         update_fields = ['model', ]
-        self.asset_obj = models.Server.objects.get(uid=self.asset_uid)
-        self.__compare_componet(model_obj=self.asset_obj, update_fields=update_fields, data_source=self.clean_data)
+        self.server_obj = models.Server.objects.get(uid=self.asset_uid)
+        self.__compare_componet(model_obj=self.server_obj, update_fields=update_fields, data_source=self.clean_data)
 
     def __compare_componet(self, model_obj, update_fields, data_source):
         """
@@ -380,8 +440,7 @@ class Handler(DataValidityCheck):
             val_from_agent = data_source.get(field)
             if val_from_agent:
                 if str(val_from_db) != str(val_from_agent):
-                    # TODO: a special method, update data in mysql.
-                    # Retrieving a single field instance of a model by name
+                    # TODO: a special method, update data in mysql. # Retrieving a single field instance of a model by name
                     db_field_obj = model_obj._meta.get_field(field)
                     db_field_obj.save_form_data(model_obj, val_from_agent)
                     model_obj.update_date = timezone.now()
@@ -390,7 +449,7 @@ class Handler(DataValidityCheck):
                     log_msg = u"Table<%s> Field<%s> Changed: From '%s' to '%s' " % (
                         'Server', field, val_from_db, val_from_agent)
                     self.response_msg('info', '__compare_componet', log_msg)
-                    log_handler(self.asset_obj, 'FieldChanged', self.request.user, log_msg)
+                    log_handler(self.server_obj, 'FieldChanged', self.request.user, log_msg)
                     self.update_successful = True
             else:
                 self.response_msg('warning', '__compare_componet',
@@ -405,7 +464,7 @@ class Handler(DataValidityCheck):
         identify_field: identify each component of an Asset , None means only use asset id to identify
         """
         try:
-            component_obj = getattr(self.asset_obj, fk)  # 获取关联外键表对象
+            component_obj = getattr(self.server_obj, fk)  # 获取关联外键表对象
             if hasattr(component_obj, 'select_related'):  # component_obj is reverse m2m relation with server model
                 objects_from_db = component_obj.select_related()
                 for obj in objects_from_db:  # obj 每条匹配的row对象
@@ -425,7 +484,7 @@ class Handler(DataValidityCheck):
                                 self.response_msg(
                                     'warning', '__update_asset_component',
                                     "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
-                                        fk, self.asset_obj.uid, identify_field, field_data_from_db))
+                                        fk, self.server_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
@@ -444,7 +503,7 @@ class Handler(DataValidityCheck):
                                 self.response_msg(
                                     'warning', '__update_asset_component',
                                     "Asset: table<%s> where uid = %s and %s = %s; Not provided in agent data " % (
-                                        fk, self.asset_obj.uid, identify_field, field_data_from_db))
+                                        fk, self.server_obj.uid, identify_field, field_data_from_db))
 
                         else:  # couldn't find any matches, the asset component must be broken or changed manually
                             self.response_msg(
@@ -487,18 +546,18 @@ class Handler(DataValidityCheck):
                                   add_list=data_only_in_data_source, identify_field=identify_field)
 
 
-def log_handler(asset_obj, event_name, user, detail, component=None):
+def log_handler(server_obj, event_name, user, detail, component=None):
     if not user.id:
-        user = models.UserProfile.objects.filter(is_admin=True).last()
+        user = UserProfile.objects.filter(is_admin=True).last()
 
     try:
         log_obj = models.EventLog(
-            asset_uid=asset_obj,
+            asset_uid=server_obj,
             event_name=event_name,
             user_id=user.id,
             detail=detail,
             component=component,
-            memo=asset_obj.uid)
+            memo=server_obj.uid)
 
         log_obj.save()
         return True

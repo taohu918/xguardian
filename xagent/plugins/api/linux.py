@@ -8,22 +8,9 @@
 import os
 import commands
 import re
-import sys
 
 
 class DiskPlugin(object):
-    def echo(self, msg, line=getattr(sys, '_getframe')().f_lineno):
-        """
-        :func: self.echo(msg, getattr(sys, '_getframe')().f_lineno)
-        :param msg: message to print
-        :param line: getattr(sys, '_getframe')().f_lineno
-        :return:
-        """
-        import inspect
-        import os
-        print("\033[1;33m %s.%s.%s \033[0m" % (os.path.abspath(__file__), self.__class__.__name__, inspect.stack()[1][3]))
-        print("\033[1;33m line %s: output -> %s \033[0m" % (line, str(msg)))
-
     def centos(self):
         result = {'physical_disk_driver': []}
 
@@ -71,6 +58,12 @@ class DiskPlugin(object):
 
             if temp_dict:
                 response.append(temp_dict)
+
+        # TODO: 如果是 虚拟机
+        if not response:
+            output_vm = commands.getstatusoutput("df | sed 1d | awk '{SUM +=$2} END {print SUM}'")
+            response.append({'capacity': output_vm})
+
         return response
 
     def mega_patter_match(self, needle):
@@ -215,15 +208,14 @@ class Main(DiskPlugin):
         tmp_dict = {}
         for line in raw_list:
             count += 1
-            if count < 21:
+            if count < 21:  # raw_list 里，每21行是一个信息段，具体视命令执行结果而定
                 for k, v in info_needed.items():
                     if k in line:
-                        # print(line)
                         valid_info = line.split(':')[1].strip()
                         if valid_info != '':
                             tmp_dict[v] = valid_info
                         else:
-                            tmp_dict['flag'] = 'invalid'
+                            tmp_dict['flag'] = 'invalid'  # 内存槽未插满时
 
             elif count == 21:
                 if 'flag' in tmp_dict:  # 去除未插入内存条的槽

@@ -90,7 +90,7 @@ class Main(object):
                     break
             else:
                 item_data['iface_type'] = 'unknown(out of range)'
-            item_data['slot'] = disk.Index
+            item_data['slot'] = 'slot'+str(disk.Index)
             item_data['sn'] = disk.SerialNumber
             item_data['model'] = disk.Model
             item_data['manufactory'] = disk.Manufacturer

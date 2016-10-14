@@ -18,6 +18,8 @@ Params = {
     'log_file': '%s/logs/run_log' % BaseDir,
 
     'kinds': 'physics_machines',
+    'hosted': '127.0.0.1',
+
     'auth': {
         'user': 'axe',
         'token': '123abc'

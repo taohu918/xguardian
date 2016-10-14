@@ -42,6 +42,7 @@ class Mercurial(object):
         obj = plugin_dispatcher.Collector()
         this_asset_data = obj.run()
         this_asset_data['kinds'] = settings.Params['kinds']
+        this_asset_data['hosted'] = settings.Params['hosted']
 
         this_asset_id = self.local_asset_id()
         if this_asset_id:

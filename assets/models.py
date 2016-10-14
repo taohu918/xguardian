@@ -98,7 +98,7 @@ class Server(models.Model):
     admin = models.ForeignKey('userauth.UserProfile', blank=True, null=True, verbose_name=u'管理员')
 
     mip = models.CharField(max_length=50, blank=True, null=True)
-    hosted_on = models.GenericIPAddressField(blank=True, null=True, verbose_name='虚拟底层')
+    hosted = models.GenericIPAddressField(blank=True, null=True, verbose_name='虚拟底层')
     expired_date = models.DateField(blank=True, null=True, verbose_name='过保日期')
     create_time = models.DateTimeField(blank=True, auto_now_add=True)
     update_time = models.DateTimeField(blank=True, null=True, auto_now=True)
@@ -166,7 +166,8 @@ class RAM(models.Model):
     update_time = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s:%s:%s' % (self.asset_uid, self.slot, self.capacity)
+        # return '%s:%s:%s' % (self.asset_uid, self.slot, self.capacity)
+        return self.capacity
 
     class Meta:
         verbose_name = 'RAM'

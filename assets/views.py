@@ -10,6 +10,15 @@ from rest_framework.views import APIView
 from utilsbox import decorations
 from utilsbox.data_handler import Handler
 import json
+import models
+
+
+def mmth(request):
+    obj = models.Server.objects.get(uid='A5F9FBD3D87508C8DB39ED985A81D6C2')
+    obj_related = obj.business
+    print obj.admin
+    print obj.business.name
+    print ''
 
 
 class ServerReport(APIView):

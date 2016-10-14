@@ -9,8 +9,7 @@ from assets import models
 
 
 def index(request):
-    xindex = 'hello world'
-    return render(request, 'index.html', {'xindex': xindex})
+    return render(request, 'index.html', )
 
 
 def account_login(request):
@@ -105,3 +104,15 @@ def assets(request):
     all_rows = 200
     paginations = page_obj.pagination(all_rows, '/eyes/assets/?pid=')
     return render(request, 'assets.html', {'data': data, 'pagination': paginations})
+
+
+def details(request, uid):
+    obj = models.Server.objects.get(uid=uid)
+    print obj
+
+    # 计算内存大小，error place
+    capacity_ram = 0
+    for ram in obj.ram_set.all():
+        capacity_ram += int(ram.capacity)
+
+    return render(request, 'details.html', {'asset': obj, 'capacity_ram': capacity_ram})

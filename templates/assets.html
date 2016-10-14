@@ -1,9 +1,35 @@
 {% extends 'index.html' %}
 
 {% block content %}
-    I am assets.html
-    {% for i in data %}
-        <p>{{ i.uid }}--{{ i.sn }}--{{ i.model }}</p>
-    {% endfor %}
+    <ol class="breadcrumb">
+        <li><a href="/eyes/assets/">资产总汇</a></li>
+    </ol>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>编号</th>
+            <th>名称</th>
+            <th>业务线</th>
+            <th>管理ip</th>
+            <th>CPU/RAM</th>
+            <th>型号</th>
+            <th>管理员</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for i in data %}
+            <tr>
+                <td><a href="/eyes/details/{{ i.uid }}/">{{ forloop.counter }}</a></td>
+                <td>{{ i.name }}</td>
+                <td>{{ i.business.name }}</td>
+                <td>{{ i.mip }}</td>
+                <td>{{ i.cpu.logic_count }}核/{{ capacity_ram }}MB</td>
+                <td>{{ i.model }}</td>
+                <td>{{ i.admin }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
     <div>{{ pagination|safe }}</div>
 {% endblock %}
