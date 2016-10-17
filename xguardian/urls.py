@@ -16,10 +16,12 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from assets import urls as assets_urls
+from eyes.views import index
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('assets.urls')),
     url(r'^asset/', include(assets_urls)),
     url(r'eyes/', include('eyes.urls')),
+    url(r'^$', index),
 ]

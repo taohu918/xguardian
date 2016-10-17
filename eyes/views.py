@@ -108,11 +108,11 @@ def assets(request):
 
 def details(request, uid):
     obj = models.Server.objects.get(uid=uid)
-    print obj
+    return render(request, 'details.html', {'asset': obj})
 
-    # 计算内存大小，error place
-    capacity_ram = 0
-    for ram in obj.ram_set.all():
-        capacity_ram += int(ram.capacity)
 
-    return render(request, 'details.html', {'asset': obj, 'capacity_ram': capacity_ram})
+def modifylog(request):
+    obj = models.EventLog.objects.all()
+    # for i in obj:
+    #     print i.asset_uid
+    return render(request, 'modifylog.html', {'modifylog_obj': obj})

@@ -6,10 +6,12 @@ from assets import models
 from django.utils import timezone
 from userauth.models import UserProfile
 from django.core.exceptions import ObjectDoesNotExist
-import sys
 
-reload(sys)
-sys.setdefaultencoding("utf-8")
+
+# import sys
+#
+# reload(sys)
+# sys.setdefaultencoding("utf-8")
 
 
 class DataValidityCheck(object):
@@ -51,7 +53,7 @@ class DataValidityCheck(object):
                 self.kinds = str(data['kinds'])
                 if not self.response['error']:
                     return True
-            except ValueError, e:
+            except ValueError as e:
                 self.response_msg('error', 'data_is_valid', str(e))
                 return False
         else:
@@ -94,11 +96,12 @@ class DataValidityCheck(object):
         if field_val != 0:
             try:
                 data_set[field_key] = data_type(field_val)
-            except ValueError, e:
+            except ValueError as e:
                 self.response_msg(
                     'error',
                     mth,
-                    "Data type of field<%s> isn't [%s], plz check " % (field_key, data_type))
+                    # "Data type of field<%s> isn't [%s], plz check " % (field_key, data_type))
+                    str(e))
                 return False
 
         elif required:  # 如果为必须需要字段
@@ -160,7 +163,8 @@ class Handler(DataValidityCheck):
         try:
             if models.Server.objects.filter(uid=self.asset_uid):
                 self.response_msg('error', '__add_server_obj', u'资产uid已存在 %s' % self.asset_uid)
-                print u'资产uid已存在 %s' % self.asset_uid
+                log_handler(None, '__add_server_obj', self.request.user, u'资产uid已存在 %s' % self.asset_uid, event_type=4,
+                            component='server')
 
             self.field_verify(self.clean_data, 'model', str, mth='__add_server_obj')
             if not len(self.response['error']) or ignore_errs:  # no errors or ignore errors
@@ -169,12 +173,14 @@ class Handler(DataValidityCheck):
                     'sn': self.clean_data['sn'],
                     'model': self.clean_data.get('model'),
                     'hosted': self.clean_data.get('hosted'),
+                    'ram_size': self.clean_data.get('ram_size')
                 }
                 obj = models.Server(**data_dic)
                 obj.save()
 
                 log_msg = "Asset<%s> add new [server] record ." % self.asset_uid
                 self.response_msg('info', '__add_server_obj', log_msg)
+                log_handler(obj, '__add_server_obj', self.request.user, log_msg, event_type=1, component='server')
 
                 self.add_successful = True
 
@@ -183,8 +189,9 @@ class Handler(DataValidityCheck):
             else:
                 self.server_obj = models.Server.objects.get(uid=self.asset_uid, sn=self.clean_data['sn'])
 
-        except Exception, e:
+        except Exception as e:
             self.response_msg('error', '__add_server_obj', str(e))
+            log_handler('', '__add_server_obj', self.request.user, str(e), event_type=4, component='server')
             self.add_successful = False
 
     def __check_manufactory(self, ignore_errs=False):
@@ -205,7 +212,7 @@ class Handler(DataValidityCheck):
                 self.server_obj.save()
                 self.add_successful = True
 
-        except Exception, e:
+        except Exception as e:
             self.response_msg('error', '__check_manufactory', str(e))
             self.add_successful = False
 
@@ -227,11 +234,13 @@ class Handler(DataValidityCheck):
 
                 log_msg = "Asset<%s> add new [cpu] record with data [%s]" % (self.asset_uid, data_set)
                 self.response_msg('info', '__add_cpu_component', log_msg)
+                log_handler(self.server_obj, '__add_cpu_component', self.request.user, log_msg, event_type=1, component='CPU')
 
                 self.add_successful = True
 
-        except Exception, e:
+        except Exception as e:
             self.response_msg('error', '__add_cpu_component', str(e))
+            log_handler(self.server_obj, '__add_cpu_component', self.request.user, str(e), event_type=4, component='CPU')
             self.add_successful = False
 
     def __add_disk_component(self):
@@ -260,6 +269,8 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_disk_component', log_msg)
+                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg, event_type=1,
+                                        component='Disk')
 
                             self.add_successful = True
 
@@ -275,14 +286,21 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_disk_component', log_msg)
+                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg, event_type=1,
+                                        component='Disk')
 
                             self.add_successful = True
 
-                except Exception, e:
+                except Exception as e:
                     self.response_msg('error', '__add_disk_component', str(e))
+                    log_handler(self.server_obj, '__add_disk_component', self.request.user, str(e), event_type=4,
+                                component='Disk')
                     self.add_successful = False
         else:
-            self.response_msg('error', '__add_disk_component', 'Disk info is not provied in your reporting data')
+            log_msg = 'Disk info is not provied in your reporting data'
+            self.response_msg('error', '__add_disk_component', log_msg)
+            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg, event_type=4,
+                        component='Disk')
             self.add_successful = False
 
     def __add_nic_component(self):
@@ -308,15 +326,23 @@ class Handler(DataValidityCheck):
 
                         log_msg = "Asset<%s> add new [nic] record with data [%s]" % (self.asset_uid, data_set)
                         self.response_msg('info', '__add_nic_component', log_msg)
+                        log_handler(self.server_obj, '__add_nic_component', self.request.user, log_msg, event_type=1,
+                                    component='NIC')
 
                         self.add_successful = True
 
-                except Exception, e:
+                except Exception as e:
                     self.response_msg('error', '__add_nic_component', str(e))
+                    log_handler(self.server_obj, '__add_nic_component', self.request.user, str(e), event_type=4,
+                                component='NIC')
                     self.add_successful = False
 
         else:
+            log_msg = 'NIC info is not provied in your reporting data'
             self.response_msg('error', '__add_nic_component', 'NIC info is not provied in your reporting data')
+            log_handler(self.server_obj, '__add_nic_component', self.request.user, log_msg, event_type=4,
+                        component='NIC')
+
             self.add_successful = False
 
     def __add_ram_component(self):
@@ -339,6 +365,8 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_ram_component', log_msg)
+                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg, event_type=1,
+                                        component='RAM')
 
                             self.add_successful = True
 
@@ -353,15 +381,23 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_ram_component', log_msg)
+                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg, event_type=1,
+                                        component='RAM')
 
                             self.add_successful = True
 
-                except Exception, e:
+                except Exception as e:
                     self.response_msg('error', '__add_ram_component', 'Object [ram] %s' % str(e))
+                    log_handler(self.server_obj, '__add_ram_component', self.request.user, str(e), event_type=4,
+                                component='RAM')
                     self.add_successful = False
 
         else:
+            log_msg = 'RAM info is not provied in your reporting data'
             self.response_msg('error', '__add_ram_component', 'RAM info is not provied in your reporting data')
+            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg, event_type=4,
+                        component='RAM')
+
             self.add_successful = False
 
     def __add_os_component(self, ignore_errs=False):
@@ -381,11 +417,16 @@ class Handler(DataValidityCheck):
 
                 log_msg = "Asset<%s> add new [os] record with data [%s]" % (self.asset_uid, data_set)
                 self.response_msg('info', '__add_os_component', log_msg)
+                log_handler(self.server_obj, '__add_os_component', self.request.user, log_msg, event_type=1,
+                            component='OS')
 
                 self.add_successful = True
 
-        except Exception, e:
+        except Exception as e:
             self.response_msg('error', '__add_os_component', 'Object [os] %s' % str(e))
+            log_handler(self.server_obj, '__add_os_component', self.request.user, str(e), event_type=1,
+                        component='OS')
+
             self.add_successful = False
 
     def _update_asset_server(self):
@@ -419,7 +460,7 @@ class Handler(DataValidityCheck):
             # manufactory = self.__update_manufactory_component()
             self.update_successful = True
 
-        except Exception, e:
+        except Exception as e:
             self.response_msg('error', '_update_asset_server', 'Object [server] %s' % str(e))
             self.update_successful = False
 
@@ -510,16 +551,15 @@ class Handler(DataValidityCheck):
                                 "error", "__update_asset_component",
                                 "Cannot find any matches in agent data by key field val [%s]" % field_data_from_db)
                     else:
-                        print '\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m'
+                        print('\033[31;1mMust be sth wrong,logic should goes to here at all.\033[0m')
 
             else:  # this component is reverse fk relation with Asset model
                 pass
-        except ValueError, e:
-            print '\033[41;1m%s\033[0m' % str(e)
+        except ValueError as e:
+            print('\033[41;1m%s\033[0m' % str(e))
 
     def __filter_add_or_deleted_components(self, model_obj_name, data_from_db, data_source, identify_field):
-        '''This function is filter out all  component data in db but missing in reporting data, and all the data in reporting data but not in DB'''
-        print data_from_db, data_source, identify_field
+        """filter out all  component data in db but not in reporting data, and all the data in reporting data but not in DB"""
         data_source_key_list = []  # save all the idenified keys from client data,e.g: [macaddress1,macaddress2]
         if type(data_source) is list:
             for data in data_source:
@@ -530,15 +570,15 @@ class Handler(DataValidityCheck):
                     data_source_key_list.append(data.get(identify_field))
                 else:  # workround for some component uses key as identified field e.g: ram
                     data_source_key_list.append(key)
-        print '-->identify field [%s] from db  :', data_source_key_list
-        print '-->identify[%s] from data source:', [getattr(obj, identify_field) for obj in data_from_db]
+
+        print('-->identify field [%s] from db  :', data_source_key_list)
+        print('-->identify[%s] from data source:', [getattr(obj, identify_field) for obj in data_from_db])
 
         data_source_key_list = set(data_source_key_list)
         data_identify_val_from_db = set([getattr(obj, identify_field) for obj in data_from_db])
         data_only_in_db = data_identify_val_from_db - data_source_key_list  # delete all this from db
         data_only_in_data_source = data_source_key_list - data_identify_val_from_db  # add into db
-        print '\033[31;1mdata_only_in_db:\033[0m', data_only_in_db
-        print '\033[31;1mdata_only_in_data source:\033[0m', data_only_in_data_source
+
         self.__delete_components(all_components=data_from_db, delete_list=data_only_in_db,
                                  identify_field=identify_field)
         if data_only_in_data_source:
@@ -546,21 +586,28 @@ class Handler(DataValidityCheck):
                                   add_list=data_only_in_data_source, identify_field=identify_field)
 
 
-def log_handler(server_obj, event_name, user, detail, component=None):
+def log_handler(server_obj, event_name, user, detail, event_type=1, component=None, memo=None):
     if not user.id:
         user = UserProfile.objects.filter(is_admin=True).last()
+
+    if not memo:
+        memo = 'no memo.'
+
+    if not server_obj:
+        server_obj = None
 
     try:
         log_obj = models.EventLog(
             asset_uid=server_obj,
             event_name=event_name,
+            event_type=event_type,
             user_id=user.id,
             detail=detail,
             component=component,
-            memo=server_obj.uid)
+            memo=memo)
 
         log_obj.save()
         return True
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return False

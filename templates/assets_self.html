@@ -2,16 +2,13 @@
 
 {% block css %}
     <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.12/css/jquery.dataTables.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/3rd/datatables.min.css">
-    <!--autofill-->
-
 {% endblock %}
 
 {% block content %}
     <ol class="breadcrumb">
         <li><a href="/eyes/assets/">资产总汇</a></li>
     </ol>
-    <table id="data_list" class="hover">
+    <table id="data_list" class="table table-hover display">
         <thead>
         <tr>
             <th>编号</th>
@@ -37,16 +34,6 @@
         {% endfor %}
         </tbody>
     </table>
-{% endblock %}
 
-{% block js %}
-
-    <script type="text/javascript" charset="utf8" src="/static/js/3rd/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="/static/js/3rd/dataTables.bootstrap.js"></script>
-
-    <script>
-        $(document).ready(function () {
-            $('#data_list').DataTable();
-        });
-    </script>
+    <div>{{ pagination|safe }}</div>
 {% endblock %}

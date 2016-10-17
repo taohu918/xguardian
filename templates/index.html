@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="{% static "css/3rd/bootstrap/bootstrap.css" %}">
     <link rel="stylesheet" href="{% static "css/src/navbar-fixed-top.css" %}">
+    {% block css %}{% endblock %}
 </head>
 
 <body>
@@ -49,7 +50,7 @@
                 <ul class="nav nav-pills nav-stacked text-center" role="tablist">
                     <li role="presentation"><a href="#">用户管理</a></li>
                     <li role="presentation"><a href="{% url 'assets' %}">资产管理</a></li>
-                    <li role="presentation"><a href="#">变更记录</a></li>
+                    <li role="presentation"><a href="{% url 'modifylog' %}">变更记录</a></li>
                 </ul>
             </div>
             <div class="col-xs-10">
@@ -67,6 +68,8 @@
 
 <script src="{% static "js/3rd/jQuery_v2.1.1/jquery-2.1.1.js" %}"></script>
 <script src="{% static "js/3rd/bootstrap/bootstrap.js" %}"></script>
+
+{% block js %}{% endblock %}
 
 </body>
 </html>

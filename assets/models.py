@@ -91,6 +91,7 @@ class Server(models.Model):
     name = models.CharField(max_length=50, blank=True, null=True)
     model = models.CharField(max_length=50, blank=True, null=True)
 
+    ram_size = models.CharField(max_length=8)
     manufactory = models.ForeignKey('Manufactory', blank=True, null=True)
     business = models.ForeignKey('Business', blank=True, null=True, verbose_name=u'业务')
     idc = models.ForeignKey('IDC', blank=True, null=True, verbose_name=u'机房')
@@ -108,7 +109,7 @@ class Server(models.Model):
         verbose_name_plural = "服务器"
 
     def __unicode__(self):
-        return '%s sn:%s' % (self.uid, self.name)
+        return self.uid
 
 
 class TagAsset(models.Model):
@@ -228,17 +229,24 @@ class NIC(models.Model):
 
 
 class EventLog(models.Model):
-    asset_uid = models.ForeignKey('Server')
+    event_choice = (
+        (1, u'add'),
+        (2, u'upd'),
+        (3, u'del'),
+        (4, u'add_err'),
+    )
+
+    asset_uid = models.ForeignKey('Server', null=True, blank=True)
     user = models.ForeignKey('userauth.UserProfile', verbose_name=u'事件源')
     event_name = models.CharField(max_length=128, verbose_name=u'事件名称')
-    event_type = models.SmallIntegerField(u'事件类型', default=None)
+    event_type = models.SmallIntegerField(choices=event_choice, default=1, verbose_name=u'事件类型')
     component = models.CharField(max_length=255, blank=True, null=True, verbose_name='事件子项')
     detail = models.CharField(max_length=255, blank=True, null=True, verbose_name=u'事件详情')
     memo = models.CharField(max_length=255, blank=True, null=True)
     create_time = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        return self.name
+        return self.asset_uid
 
     class Meta:
         verbose_name = '事件纪录'

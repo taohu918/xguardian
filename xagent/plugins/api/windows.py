@@ -49,20 +49,23 @@ class Main(object):
 
     def get_ram_info(self):
         data = []
+        ram_size = 0
         ram_info = self.wmi_service_connector.ExecQuery("Select * from Win32_PhysicalMemory")
         mb = int(1024 * 1024)
         for item in ram_info:  # item -> <COMObject <unknown>>
-            ram_size = int(item.Capacity) / mb
+            capacity = int(item.Capacity) / mb
             item_data = {
                 "slot": item.DeviceLocator.strip(),
-                "capacity": ram_size,
+                "capacity": capacity,
                 "model": item.Caption,
                 "manufactory": item.Manufacturer,
                 "sn": item.SerialNumber,
             }
             data.append(item_data)
-        # for i in data:
-        #    print i
+
+            ram_size += int(capacity) / 1024
+            self.data.update({'ram_size': '%sGB' % ram_size}, )
+
         return {"ram": data}
 
     def get_server_info(self):
@@ -90,7 +93,7 @@ class Main(object):
                     break
             else:
                 item_data['iface_type'] = 'unknown(out of range)'
-            item_data['slot'] = 'slot'+str(disk.Index)
+            item_data['slot'] = 'slot' + str(disk.Index)
             item_data['sn'] = disk.SerialNumber
             item_data['model'] = disk.Model
             item_data['manufactory'] = disk.Manufacturer

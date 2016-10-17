@@ -232,9 +232,9 @@ class Main(DiskPlugin):
         #
 
         total_size_kb = commands.getoutput("cat /proc/meminfo|grep MemTotal ").split(":")[1].split()[0]
-        total_size_mb = int(total_size_kb) / 1024
+        total_size_mb = int(total_size_kb) / 1024 / 1024
 
-        raw_info['ram_size'] = total_size_mb
+        raw_info['ram_size'] = '%sGB' % total_size_mb
 
         # print(raw_info)
         return raw_info

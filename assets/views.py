@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from utilsbox import decorations
 from utilsbox.data_handler import Handler
 import json
-import models
+from assets import models
 
 
 def mmth(request):

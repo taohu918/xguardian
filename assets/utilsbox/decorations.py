@@ -39,7 +39,7 @@ def token_validate(func):
                     pass
             else:
                 response['errors'].append({"auth_failed": "Invalid username or token_id"})
-        except Exception, e:
+        except Exception as e:
             print(e)
             response['errors'].append({"auth_failed": "Invalid username or token_id"})
 
