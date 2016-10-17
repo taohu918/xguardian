@@ -7,8 +7,8 @@
 
 from django.shortcuts import render, HttpResponse
 from rest_framework.views import APIView
-from utilsbox import decorations
-from utilsbox.data_handler import Handler
+from assets.utilsbox import decorations
+from assets.utilsbox.data_handler import Handler
 import json
 from assets import models
 
@@ -16,9 +16,9 @@ from assets import models
 def mmth(request):
     obj = models.Server.objects.get(uid='A5F9FBD3D87508C8DB39ED985A81D6C2')
     obj_related = obj.business
-    print obj.admin
-    print obj.business.name
-    print ''
+    print(obj.admin)
+    print(obj.business.name)
+    print('')
 
 
 class ServerReport(APIView):
@@ -32,7 +32,8 @@ class ServerReport(APIView):
             msg = json.dumps({'asset_uid': asset_handler.asset_uid})
         else:
             msg = json.dumps({'asset_uid': False})
-        print asset_handler.response
+        print
+        asset_handler.response
         return HttpResponse(msg)
 
     def get(self, request):
