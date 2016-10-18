@@ -1,19 +1,96 @@
 {% extends 'index.html' %}
 
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="/static/css/3rd/datatables.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/src/custom.css">
+{% endblock %}
+
 {% block content %}
     <ol class="breadcrumb">
-        <li><a href="/eyes/details/{{ asset.uid }}">资产详情</a></li>
+        <li><a href="/eyes/details/{{ asset.uid }}/">资产详情</a></li>
         <li><a href="#">硬件信息</a></li>
+        <li><a href="/eyes/modifylog/?uid={{ asset.uid }}">变更记录</a></li>
     </ol>
+    <!--
     <div class="row">
         <div class="col-xs-5">
-            <div class="col-xs-offset-1 col-xs-4">资产ID</div>
-            <div class="col-xs-6">{{ asset.uid }}</div>
-            <div class="col-xs-offset-1 col-xs-4">资产SN</div>
-            <div class="col-xs-6">{{ asset.sn }}</div>
+            <div class="row">
+                <div class="col-xs-offset-1 col-xs-4"><h4>资产ID</h4></div>
+                <div class="col-xs-6"><h4>{{ asset.uid }}</h4></div>
+            </div>
+            <div class="row">
+                <div class="col-xs-offset-1 col-xs-4"><h4>资产SN</h4></div>
+                <div class="col-xs-6">{{ asset.sn }}</div>
+            </div>
         </div>
         <div class="col-xs-offset-1 col-xs-5">
             hello right
         </div>
     </div>
+    -->
+
+    <div class="tab-base">
+        <!--Nav Tabs-->
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#tab-asset-info" aria-expanded="true">资产信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-hardware-info" aria-expanded="false">硬件信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-software-info" aria-expanded="false">软件信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-event-record" aria-expanded="false">变更纪录</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-flow-record" aria-expanded="false">流程纪录</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-contract-info" aria-expanded="false">合同/财务</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-config" aria-expanded="false">配置信息</a></li>
+        </ul>
+
+        <!--Tabs Content-->
+        <div class="tab-content">
+            <div id="tab-asset-info" class="tab-pane fade active in">
+                <table class="asset-info-table">
+                    <tr>
+                        <td class="col-xs-2 bold">资产类型</td>
+                        <td class="col-xs-4">:服务器</td>
+                        <td class="col-xs-2 bold">所属业务线</td>
+                        <td class="col-xs-5">: {{ asset.business.name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">IDC</td>
+                        <td class="col-xs-4">: {{ asset.idc.name }}</td>
+                        <td class="col-xs-2 bold">SN</td>
+                        <td class="col-xs-5">: {{ asset.sn }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">管理IP</td>
+                        <td class="col-xs-4">: {{ asset.mip }}</td>
+                        <td class="col-xs-2 bold">MAC Address</td>
+                        <td class="col-xs-5">:
+                            {% for nic in asset.nic_set.select_related %}
+                                {% if nic.mac %}
+                                    {{ nic.mac }} |
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">业务IP</td>
+                        <td class="col-xs-4">:
+                            {% for nic in asset.nic_set.select_related %}
+                                {% if nic.ip %}
+                                    {{ nic.ip }} |
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td class="col-xs-2 bold">OS类型</td>
+                        <td class="col-xs-5">: {% for os in asset.os_set.select_related %}{{ os.os_type }}{% endfor %}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">OS Distribution</td>
+                        <td class="col-xs-4">: {% for os in asset.os_set.select_related %}{{ os.os_distribution }}{% endfor %}</td>
+                        <td class="col-xs-2 bold">OS Release Version</td>
+                        <td class="col-xs-5">: {% for os in asset.os_set.select_related %}{{ os.os_release }}{% endfor %}</td>
+                    </tr>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}

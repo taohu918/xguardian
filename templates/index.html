@@ -10,11 +10,14 @@
 
     <link rel="stylesheet" href="{% static "css/3rd/bootstrap/bootstrap.css" %}">
     <link rel="stylesheet" href="{% static "css/src/navbar-fixed-top.css" %}">
+    <link rel="stylesheet" href="{% static "css/3rd/nifty.css" %}">
+    <link rel="stylesheet" href="/static/css/3rd/nifty.css">
     {% block css %}{% endblock %}
 </head>
 
 <body>
-<nav class="navbar navbar-default navbar-fixed-top">
+<nav class=" navbar navbar-default navbar-fixed-top
+    ">
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="{% url 'index' %}">CMDB</a>
@@ -68,6 +71,7 @@
 
 <script src="{% static "js/3rd/jQuery_v2.1.1/jquery-2.1.1.js" %}"></script>
 <script src="{% static "js/3rd/bootstrap/bootstrap.js" %}"></script>
+<script src="{% static "js/3rd/nifty.js" %}"></script>
 
 {% block js %}{% endblock %}
 

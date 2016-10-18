@@ -134,7 +134,7 @@ class OS(models.Model):
     os_release = models.CharField(max_length=50, blank=True, null=True)
 
     def __unicode__(self):
-        return self.version
+        return self.os_distribution
 
     class Meta:
         verbose_name = '系统'

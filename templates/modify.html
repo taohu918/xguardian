@@ -7,30 +7,30 @@
 
 {% block content %}
     <ol class="breadcrumb">
-        <li><a href="/eyes/assets/">资产列表</a></li>
+        <li><a href="/eyes/details/{{ asset_uid }}/">资产详情</a></li>
+        <li><a href="#">硬件信息</a></li>
+        <li><a href="/eyes/modifylog/?uid={{ asset_uid }}">变更记录</a></li>
     </ol>
-    <table id="data_list" class="hover" cellspacing="0" width="100%">
+    <table id="data_list" class="hover table-bordered">
         <thead>
         <tr>
-            <th>编号</th>
-            <th>名称</th>
-            <th>业务线</th>
-            <th>管理ip</th>
-            <th>CPU/RAM</th>
-            <th>型号</th>
-            <th>管理员</th>
+            <th style="width: 30px; text-align: center;">编号</th>
+            <th style="width: 50px; text-align: center;">事件名称</th>
+            <th style="width: 40px; text-align: center;">事件类型</th>
+            <th style="text-align: center;">事件详情</th>
+            <th style="width: 40px; text-align: center;">操作人员</th>
+            <th style="width: 100px; text-align: center;">修改时间</th>
         </tr>
         </thead>
         <tbody>
-        {% for i in data %}
+        {% for i in modify_obj %}
             <tr>
-                <td><a href="/eyes/details/{{ i.uid }}/">{{ forloop.counter }}</a></td>
-                <td>{{ i.name }}</td>
-                <td>{{ i.business.name }}</td>
-                <td>{{ i.mip }}</td>
-                <td>{{ i.cpu.logic_count }}核/{{ i.ram_size }}</td>
-                <td>{{ i.model }}</td>
-                <td>{{ i.admin }}</td>
+                <td style="text-align: center;"><a href="/eyes/details/{{ i.asset_uid_id }}/">{{ forloop.counter }}</a></td>
+                <td>{{ i.event_name }}</td>
+                <td style="text-align: center;">{{ i.event_type }}</td>
+                <td>{{ i.detail }}</td>
+                <td style="text-align: center;">{{ i.user }}</td>
+                <td>{{ i.create_time }}</td>
             </tr>
         {% endfor %}
         </tbody>
