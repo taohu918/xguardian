@@ -1,11 +1,15 @@
 {% extends 'index.html' %}
 
 {% block css %}
-    <link rel="stylesheet" type="text/css" href="/static/css/3rd/datatables.min.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/src/custom.css">
+    {% load staticfiles %}
+    {#    <link rel="stylesheet" href="{% static "css/3rd/nifty.css" %}">#}
+    <link rel="stylesheet" href="{% static "css/src/custom.css" %}">
 {% endblock %}
 
+{% load tags %}
+
 {% block content %}
+    {#    <div class="row">#}
     <ol class="breadcrumb">
         <li><a href="/eyes/details/{{ asset.uid }}/">资产详情</a></li>
         <li><a href="#">硬件信息</a></li>
@@ -32,19 +36,20 @@
     <div class="tab-base">
         <!--Nav Tabs-->
         <ul class="nav nav-tabs">
-            <li class="active"><a data-toggle="tab" href="#tab-asset-info" aria-expanded="true">资产信息</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-hardware-info" aria-expanded="false">硬件信息</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-software-info" aria-expanded="false">软件信息</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-event-record" aria-expanded="false">变更纪录</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-flow-record" aria-expanded="false">流程纪录</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-contract-info" aria-expanded="false">合同/财务</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-config" aria-expanded="false">配置信息</a></li>
-        </ul>
+            <li class="active"><a data-toggle="tab" href="#tab-asset-info">资产信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-hardware-info">硬件信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-software-info">软件信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-event-record">变更纪录</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-flow-record">流程纪录</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-contract-info">合同/财务</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-config">配置信息</a></li>
+        </ul><!--Nav Tabs End-->
 
         <!--Tabs Content-->
         <div class="tab-content">
-            <div id="tab-asset-info" class="tab-pane fade active in">
+            <div id="tab-asset-info" class="tab-pane fade in active">
                 <table class="asset-info-table">
+                    <caption></caption>
                     <tr>
                         <td class="col-xs-2 bold">资产类型</td>
                         <td class="col-xs-4">:服务器</td>
@@ -83,14 +88,103 @@
                     </tr>
                     <tr>
                         <td class="col-xs-2 bold">OS Distribution</td>
-                        <td class="col-xs-4">: {% for os in asset.os_set.select_related %}{{ os.os_distribution }}{% endfor %}</td>
+                        <td class="col-xs-4">:
+                            {% for os in asset.os_set.select_related %}{{ os.os_distribution }}{% endfor %}</td>
                         <td class="col-xs-2 bold">OS Release Version</td>
-                        <td class="col-xs-5">: {% for os in asset.os_set.select_related %}{{ os.os_release }}{% endfor %}</td>
+                        <td class="col-xs-5">:
+                            {% for os in asset.os_set.select_related %}{{ os.os_release }}{% endfor %}</td>
                     </tr>
-
+                    <tr>
+                        <td class="col-xs-2 bold">厂商</td>
+                        <td class="col-xs-4">: {{ asset.manufactory.manufactory }}</td>
+                        <td class="col-xs-2 bold">型号</td>
+                        <td class="col-xs-5">: {{ asset.model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">CPU型号</td>
+                        <td class="col-xs-4">: {{ asset.cpu.cpu_model }}</td>
+                        <td class="col-xs-2 bold">CPU颗数</td>
+                        <td class="col-xs-5">: {{ asset.cpu.physical_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">总内存</td>
+                        <td class="col-xs-4">: {{ asset.ram_size }}</td>
+                        <td class="col-xs-2 bold">CPU核数</td>
+                        <td class="col-xs-5">: {{ asset.cpu.logic_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">总硬盘大小</td>
+                        <td class="col-xs-4">: {{ asset.disk_set.select_related | sum_size }}GB</td>
+                        <td class="col-xs-2 bold">状态</td>
+                        <td class="col-xs-5">: <span class="badge badge-success">在用</span></td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">资产Tags</td>
+                        <td class="col-xs-4">:
+                            {% for tag in asset.tags.select_related %}
+                                <span class="badge badge-purple">{{ tag.name }}</span>
+                            {% endfor %}
+                        </td>
+                        <td class="col-xs-2 bold">购买日期</td>
+                        <td class="col-xs-5">: {{ asset.trade_date }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">过保日期</td>
+                        <td class="col-xs-4">: {{ asset.expire_date }}</td>
+                        <td class="col-xs-2 bold">管理员</td>
+                        <td class="col-xs-5">: {{ asset.admin.name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">资产创建日期</td>
+                        <td class="col-xs-4">: {{ asset.create_time }}</td>
+                        <td class="col-xs-2 bold">最近更新日期</td>
+                        <td class="col-xs-5">: {{ asset.update_time }}</td>
+                    </tr>
                 </table>
             </div>
-        </div>
-    </div>
 
+            <div id="tab-hardware-info" class="tab-pane fade">
+                <table class="asset-info-table">
+                    <caption><h3>Server Info</h3></caption>
+                    <tr>
+                        <td class="col-xs-2 bold">Name</td>
+                        <td class="col-xs-4">: {{ asset.name }}</td>
+                        <td class="col-xs-2 bold">OS</td>
+                        <td class="col-xs-5">:
+                            {% for os in asset.os_set.select_related %}{{ os.os_distribution }}{% endfor %}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">SN</td>
+                        <td class="col-xs-4">: {{ asset.sn }}</td>
+                        <td class="col-xs-2 bold">OS Version</td>
+                        <td class="col-xs-5">:
+                            {% for os in asset.os_set.select_related %}{{ os.os_release }}{% endfor %}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">型号</td>
+                        <td class="col-xs-4">: {{ asset.model }}</td>
+                        <td class="col-xs-2 bold">信息来源</td>
+                        <td class="col-xs-5">: {{ asset.created_by }}</td>
+                    </tr>
+                </table>
+
+                <table class="asset-info-table">
+                    <caption><h3>CPU Info</h3></caption>
+                </table>
+            </div>
+
+            <div id="tab-software-info" class="tab-pane fade"></div>
+
+            <div id="tab-event-record" class="tab-pane fade"></div>
+
+            <div id="tab-flow-record" class="tab-pane fade"></div>
+
+            <div id="tab-contract-info" class="tab-pane fade"></div>
+
+            <div id="tab-config" class="tab-pane fade"></div>
+
+
+        </div><!--Tabs Content End-->
+    </div>
+    {#    </div>#}
 {% endblock %}
