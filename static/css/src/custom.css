@@ -1,17 +1,33 @@
-.pointer{
-    cursor: pointer;
+body {
+    padding-top: 70px;
+    min-height: 900px;
 }
 
-.bold{
+.bold {
     font-weight: bold;
 }
 
-.asset-info-table >tbody>tr>td{
+.asset-info-table > tbody > tr > td {
     padding-top: 10px;
 }
 
-.logo-text{
-    margin-top:15px ;
-    margin-left:10px ;
+.logo-text {
+    margin-top: 15px;
+    margin-left: 10px;
     color: #d0302e;
 }
+
+.iframe {
+    margin-top: 10px;
+    /*border: medium double rgb(250, 0, 255);*/
+    border: thick double #CAFF70;
+}
+
+.page-header {
+    height: 40px;
+}
+
+.page-height-to-top {
+    margin-top: 60px;
+}
+

@@ -12,7 +12,8 @@
     <table id="data_list" class="hover" cellspacing="0" width="100%">
         <thead>
         <tr>
-            <th>编号</th>
+            <th></th>
+            <th>资产编号</th>
             <th>名称</th>
             <th>业务线</th>
             <th>管理ip</th>
@@ -25,6 +26,7 @@
         {% for i in data %}
             <tr>
                 <td><a href="/eyes/details/{{ i.uid }}/">{{ forloop.counter }}</a></td>
+                <td>{{ i.uid }}</td>
                 <td>{{ i.name }}</td>
                 <td>{{ i.business.name }}</td>
                 <td>{{ i.mip }}</td>

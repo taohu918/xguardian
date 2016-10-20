@@ -14,8 +14,7 @@
 </head>
 
 <body>
-<nav class=" navbar navbar-default navbar-fixed-top
-    ">
+<nav class="navbar navbar-default navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="{% url 'index' %}">CMDB</a>
@@ -47,14 +46,14 @@
 {% block pg-container %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-xs-2">
-                <ul class="nav nav-pills nav-stacked text-center" role="tablist">
-                    <li role="presentation"><a href="#">用户管理</a></li>
-                    <li role="presentation"><a href="{% url 'assets' %}">资产管理</a></li>
-                    <li role="presentation"><a href="{% url 'modifylog' %}">变更记录</a></li>
+            <div class="col-md-2">
+                <ul class="nav nav-pills nav-stacked text-center">
+                    <li><a href="#">用户管理</a></li>
+                    <li><a href="{% url 'assets' %}">资产管理</a></li>
+                    <li><a href="{% url 'modifylog' %}">变更记录</a></li>
                 </ul>
             </div>
-            <div class="col-xs-10">
+            <div class="col-md-10">
                 {% block content %}
                     <div class="jumbotron">
                         <h1>Welcome to xcmdb</h1>
@@ -69,9 +68,15 @@
 
 <script src="{% static "js/3rd/jQuery_v2.1.1/jquery-2.1.1.js" %}"></script>
 <script src="{% static "js/3rd/bootstrap/bootstrap.js" %}"></script>
-{#<script src="{% static "js/3rd/nifty.js" %}"></script>#}
 
 {% block js %}{% endblock %}
+
+<script>
+    $(function () {
+        {#        $('body').animate({scrollTop: 0}, 200);#}
+        $('body').scrollTop(0);
+    });
+</script>
 
 </body>
 </html>

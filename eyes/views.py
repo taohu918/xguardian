@@ -108,7 +108,7 @@ def assets(request):
 
 def details(request, uid):
     obj = models.Server.objects.get(uid=uid)
-    o = obj.os_set.select_related()
+    # o = obj.os_set.select_related()
     # oo = o[0]
     # for i in o:
     #     print i

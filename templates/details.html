@@ -2,36 +2,17 @@
 
 {% block css %}
     {% load staticfiles %}
-    {#    <link rel="stylesheet" href="{% static "css/3rd/nifty.css" %}">#}
     <link rel="stylesheet" href="{% static "css/src/custom.css" %}">
 {% endblock %}
 
 {% load tags %}
 
 {% block content %}
-    {#    <div class="row">#}
     <ol class="breadcrumb">
         <li><a href="/eyes/details/{{ asset.uid }}/">资产详情</a></li>
-        <li><a href="#">硬件信息</a></li>
-        <li><a href="/eyes/modifylog/?uid={{ asset.uid }}">变更记录</a></li>
+        {#        <li><a href="#">硬件信息</a></li>#}
+        {#        <li><a href="/eyes/modifylog/?uid={{ asset.uid }}">变更记录</a></li>#}
     </ol>
-    <!--
-    <div class="row">
-        <div class="col-xs-5">
-            <div class="row">
-                <div class="col-xs-offset-1 col-xs-4"><h4>资产ID</h4></div>
-                <div class="col-xs-6"><h4>{{ asset.uid }}</h4></div>
-            </div>
-            <div class="row">
-                <div class="col-xs-offset-1 col-xs-4"><h4>资产SN</h4></div>
-                <div class="col-xs-6">{{ asset.sn }}</div>
-            </div>
-        </div>
-        <div class="col-xs-offset-1 col-xs-5">
-            hello right
-        </div>
-    </div>
-    -->
 
     <div class="tab-base">
         <!--Nav Tabs-->
@@ -43,6 +24,7 @@
             <li class=""><a data-toggle="tab" href="#tab-flow-record">流程纪录</a></li>
             <li class=""><a data-toggle="tab" href="#tab-contract-info">合同/财务</a></li>
             <li class=""><a data-toggle="tab" href="#tab-config">配置信息</a></li>
+            <li class=""><a data-toggle="tab" href="#tab-console">机器终端</a></li>
         </ul><!--Nav Tabs End-->
 
         <!--Tabs Content-->
@@ -170,21 +152,188 @@
 
                 <table class="asset-info-table">
                     <caption><h3>CPU Info</h3></caption>
+                    <tr>
+                        <td class="col-xs-2 bold">CPU型号</td>
+                        <td class="col-xs-4">: {{ asset.cpu.cpu_model }}</td>
+                        <td class="col-xs-2 bold">物理CPU个数</td>
+                        <td class="col-xs-5">: {{ asset.cpu.physical_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">CPU核数</td>
+                        <td class="col-xs-4">: {{ asset.cpu.logic_count }}</td>
+                        <td class="col-xs-2 bold">最近更新日期</td>
+                        <td class="col-xs-5">: {{ asset.cpu.update_time }}</td>
+                    </tr>
+                </table>
+
+                <table class="asset-info-table">
+                    <caption><h3>Ram Info</h3></caption>
+                    <tr>
+                        <td class="col-xs-2 bold">总内存大小(MB)</td>
+                        <td class="col-xs-4">: {{ asset.ram_set.select_related | sum_size }}</td>
+                        <td class="col-xs-2 bold">内存条数</td>
+                        <td class="col-xs-5">: {{ asset.ram_set.select_related | list_count }}</td>
+                    </tr>
+                </table>
+                <hr/>
+                <table class="table asset-info-table">
+                    <thead>
+                    <tr>
+                        <th>插槽</th>
+                        <th>容量(MB)</th>
+                        <th>型号</th>
+                        <th>SN</th>
+                        <th>汇报日期</th>
+                        <th>最近变更</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for ram in asset.ram_set.select_related %}
+                        <tr>
+                            <td class="">{{ ram.slot }}</td>
+                            <td class="">{{ ram.capacity }}</td>
+                            <td class="">{{ ram.model }}</td>
+                            <td class="">{{ ram.sn }}</td>
+                            <td class="">{{ ram.create_time }}</td>
+                            <td class="">{{ ram.update_time }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+                <table class="asset-info-table">
+                    <caption><h3>Disk Info</h3></caption>
+                    <tr>
+                        <td class="col-xs-2 bold">总硬盘大小(GB)</td>
+                        <td class="col-xs-4">: {{ asset.disk_set.select_related | sum_size }}</td>
+                        <td class="col-xs-2 bold">硬盘块数</td>
+                        <td class="col-xs-5">: {{ asset.disk_set.select_related | list_count }}</td>
+                    </tr>
+                </table>
+                <hr/>
+                <table class="table asset-info-table">
+                    <thead>
+                    <tr>
+                        <th>插槽</th>
+                        <th>容量(GB)</th>
+                        <th>接口型</th>
+                        <th>厂商</th>
+                        <th>SN</th>
+                        <th>汇报日期</th>
+                        <th>最近变更</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for disk in asset.disk_set.select_related %}
+                        <tr>
+                            <td class="">{{ disk.slot }}</td>
+                            <td class="">{{ disk.capacity }}</td>
+                            <td class="">{{ disk.iface_type }}</td>
+                            <td class="">{{ disk.manufactory }}</td>
+                            <td class="">{{ disk.sn }}</td>
+                            <td class="">{{ disk.create_time }}</td>
+                            <td class="">{{ disk.update_time }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+                <table class="table asset-info-table">
+                    <caption><h3>NIC Info</h3></caption>
+                    <thead>
+                    <tr>
+                        <th>网卡名</th>
+                        <th>IP Addr</th>
+                        <th>MAC</th>
+                        <th>Network</th>
+                        <th>是否Bonding</th>
+                        <th>汇报日期</th>
+                        <th>最近变更</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for nic in asset.nic_set.select_related %}
+                        <tr>
+                            <td class="">{{ nic.name }}</td>
+                            <td class="">{{ nic.ip }}</td>
+                            <td class="">{{ nic.mac }}</td>
+                            <td class="">{{ nic.mask }}</td>
+                            <td class="">{{ nic.bonding }}</td>
+                            <td class="">{{ nic.create_time }}</td>
+                            <td class="">{{ nic.update_time }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
                 </table>
             </div>
 
-            <div id="tab-software-info" class="tab-pane fade"></div>
+            <div id="tab-software-info" class="tab-pane fade">
+                <h4 class="text-thin">software</h4>
+                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
+            </div>
 
-            <div id="tab-event-record" class="tab-pane fade"></div>
+            <div id="tab-event-record" class="tab-pane fade">
+                <table class="hover table-bordered">
+                    <thead>
+                    <tr>
+                        <th style="width: 30px; text-align: center;">编号</th>
+                        <th style="width: 50px; text-align: center;">事件名称</th>
+                        <th style="width: 40px; text-align: center;">事件类型</th>
+                        <th style="text-align: center;">事件详情</th>
+                        <th style="width: 40px; text-align: center;">操作人员</th>
+                        <th style="width: 100px; text-align: center;">修改时间</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in asset.eventlog_set.select_related %}
+                        <tr>
+                            <td style="text-align: center;"><a
+                                    href="/eyes/details/{{ i.asset_uid_id }}/">{{ forloop.counter }}</a></td>
+                            <td>{{ i.event_name }}</td>
+                            <td style="text-align: center;">{{ i.event_type }}</td>
+                            <td>{{ i.detail }}</td>
+                            <td style="text-align: center;">{{ i.user }}</td>
+                            <td>{{ i.create_time }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-            <div id="tab-flow-record" class="tab-pane fade"></div>
+            <div id="tab-flow-record" class="tab-pane fade">
+                <h4 class="text-thin">flow</h4>
+                <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
+            </div>
 
-            <div id="tab-contract-info" class="tab-pane fade"></div>
+            <div id="tab-contract-info" class="tab-pane fade">
+                <table class=" asset-info-table">
+                    <caption></caption>
+                    <tr>
+                        <td class="col-xs-2 bold">价格(RMB)</td>
+                        <td class="col-xs-4">: {{ asset.price }}</td>
+                        <td class="col-xs-2 bold">购买日期</td>
+                        <td class="col-xs-5">: {{ asset.trade_date }}</td>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-2 bold">过保日期</td>
+                        <td class="col-xs-4">: {{ asset.expired_date }}</td>
+                        <td class="col-xs-2 bold">所属合同</td>
+                        <td class="col-xs-5">: {{ asset.contract }}</td>
+                    </tr>
+                </table>
+            </div>
 
-            <div id="tab-config" class="tab-pane fade"></div>
+            <div id="tab-config" class="tab-pane fade">
+                <h4 class="text-thin"><a class="btn-link" href="/admin/assets/asset/{{ asset_obj.id }}/" target="_blank">配置</a>
+                </h4>
+                <p>只有管理管理员有权限修改资产信息.</p>
+            </div>
 
+            <div id="tab-console" class="table-pane fade embed-responsive embed-responsive-16by9 iframe">
+                <iframe class="embed-responsive-item" src="http://172.16.79.150:3000"></iframe>
+            </div>
 
         </div><!--Tabs Content End-->
     </div>
-    {#    </div>#}
+
 {% endblock %}

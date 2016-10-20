@@ -226,6 +226,9 @@ class Main(DiskPlugin):
                 tmp_dict = {}
                 count = 1
 
+        for i in raw_info['ram']:
+            i['capacity'] = i['capacity'].split()[0]
+
         # total_size_mb = 0
         # for item in raw_info['ram']:
         #     total_size_mb += int(item['capacity'].split('MB')[0].split('mb')[0])

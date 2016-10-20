@@ -13,6 +13,13 @@ register = template.Library()
 
 @register.filter
 def sum_size(data_set):
-    total_val = sum([int(i.capacity) if i.capacity else 0 for i in data_set])
+    total_val = sum([float(i.capacity) if i.capacity else 0 for i in data_set])
 
     return total_val
+
+
+@register.filter
+def list_count(data_set):
+    data_count = len([i.capacity if i.capacity else 0 for i in data_set])
+
+    return data_count
