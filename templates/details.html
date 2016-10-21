@@ -1,10 +1,5 @@
 {% extends 'index.html' %}
 
-{% block css %}
-    {% load staticfiles %}
-    <link rel="stylesheet" href="{% static "css/src/custom.css" %}">
-{% endblock %}
-
 {% load tags %}
 
 {% block content %}
@@ -24,11 +19,12 @@
             <li class=""><a data-toggle="tab" href="#tab-flow-record">流程纪录</a></li>
             <li class=""><a data-toggle="tab" href="#tab-contract-info">合同/财务</a></li>
             <li class=""><a data-toggle="tab" href="#tab-config">配置信息</a></li>
-            <li class=""><a data-toggle="tab" href="#tab-console">机器终端</a></li>
+            <li id="console" class=""><a data-toggle="tab" href="#tab-console">机器终端</a></li>
         </ul><!--Nav Tabs End-->
 
         <!--Tabs Content-->
         <div class="tab-content">
+            <!--资产信息-->
             <div id="tab-asset-info" class="tab-pane fade in active">
                 <table class="asset-info-table">
                     <caption></caption>
@@ -123,8 +119,10 @@
                         <td class="col-xs-5">: {{ asset.update_time }}</td>
                     </tr>
                 </table>
+
             </div>
 
+            <!--硬件信息-->
             <div id="tab-hardware-info" class="tab-pane fade">
                 <table class="asset-info-table">
                     <caption><h3>Server Info</h3></caption>
@@ -272,8 +270,10 @@
                 <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
             </div>
 
+            <!--变更记录-->
             <div id="tab-event-record" class="tab-pane fade">
                 <table class="hover table-bordered">
+                    <caption></caption>
                     <thead>
                     <tr>
                         <th style="width: 30px; text-align: center;">编号</th>
@@ -329,11 +329,26 @@
                 <p>只有管理管理员有权限修改资产信息.</p>
             </div>
 
-            <div id="tab-console" class="table-pane fade embed-responsive embed-responsive-16by9 iframe">
-                <iframe class="embed-responsive-item" src="http://172.16.79.150:3000"></iframe>
+            <div id="tab-console" class="table-pane fade">
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe id="iframe" class="embed-responsive-item" src=""></iframe>
+                </div>
             </div>
+
 
         </div><!--Tabs Content End-->
     </div>
 
+{% endblock %}
+
+{% block js %}
+    <script>
+        $('#console').click(
+                function () {
+                    /* document.getElementById('#iframe').style.height = "200px";*/
+                    $('#iframe').attr('src', 'http://172.16.79.150:3000/').height(450).css('border', 'thick double #CAFF70');
+                    $(window).scrollTop(0);
+                }
+        )
+    </script>
 {% endblock %}
