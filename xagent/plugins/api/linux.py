@@ -22,7 +22,7 @@ class DiskPlugin(object):
             output = commands.getstatusoutput(shell_command)
             result['physical_disk_driver'] = self.parse(output[1])
 
-        except Exception, e:
+        except Exception as e:
             result['error'] = e
         return result
 
@@ -62,7 +62,8 @@ class DiskPlugin(object):
         # TODO: 如果是 虚拟机
         if not response:
             output_vm = commands.getstatusoutput("df | sed 1d | awk '{SUM +=$2} END {print SUM}'")
-            response.append({'capacity': output_vm})
+            capacity = int(output_vm[1]) / 1024 / 1024
+            response.append({'capacity': capacity})
 
         return response
 
@@ -86,8 +87,8 @@ class Main(DiskPlugin):
                 res_validate = res.split(':')[1].strip()
                 raw_data[key] = res_validate
 
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
                 raw_data[key] = 'ErrorMsg'
 
         data = {
@@ -180,8 +181,8 @@ class Main(DiskPlugin):
             try:
                 # cmd_res = subprocess.check_output(cmd,shell=True)
                 raw_data[k] = commands.getoutput(cmd).strip()
-            except ValueError, e:
-                print e
+            except ValueError as e:
+                print(e)
 
         return raw_data
 
@@ -229,15 +230,14 @@ class Main(DiskPlugin):
         for i in raw_info['ram']:
             i['capacity'] = i['capacity'].split()[0]
 
-        # total_size_mb = 0
-        # for item in raw_info['ram']:
-        #     total_size_mb += int(item['capacity'].split('MB')[0].split('mb')[0])
-        #
-
         total_size_kb = commands.getoutput("cat /proc/meminfo|grep MemTotal ").split(":")[1].split()[0]
-        total_size_mb = int(total_size_kb) / 1024 / 1024
 
-        raw_info['ram_size'] = '%sGB' % total_size_mb
+        total_size_mb = int(total_size_kb) / 1024
+        if not raw_info['ram']:
+            raw_info['ram'].append({'capacity': total_size_mb})
+
+        total_size_gb = int(total_size_kb) / 1024 / 1024
+        raw_info['ram_size'] = '%sGB' % total_size_gb
 
         # print(raw_info)
         return raw_info
@@ -260,4 +260,4 @@ class Main(DiskPlugin):
 
 if __name__ == "__main__":
     obj = Main()
-    print obj.collect()
+    obj.collect()

@@ -7,11 +7,18 @@
 import os
 import sys
 import json
-import plugin_dispatcher
+
 import urllib
 import urllib2
-from conf import settings
+
+import plugin_dispatcher
 import token_generator
+from conf import settings
+
+# py 3
+# from xagent.coremth import plugin_dispatcher
+# from xagent.coremth import token_generator
+# from xagent.conf import settings
 
 
 class Mercurial(object):
@@ -61,7 +68,7 @@ class Mercurial(object):
     def local_asset_id(sn=None):
         local_asset_id_file = settings.Params['local_asset_id_file']
         if os.path.isfile(local_asset_id_file):
-            local_asset_id = file(local_asset_id_file).read().strip()
+            local_asset_id = open(local_asset_id_file).read().strip()
             return local_asset_id
             # if local_asset_id.isdigit():
             #     return local_asset_id
@@ -81,26 +88,9 @@ class Mercurial(object):
                 res_data = urllib2.urlopen(req, timeout=settings.Params['request_timeout'])
                 callback_msg = res_data.read()
                 print('\033[1;33m %s \033[0m' % __file__)
-                print type(callback_msg), callback_msg
+                print(type(callback_msg), callback_msg)
                 self.write_uid_into_file(callback_msg)
-            except Exception, e:
-                sys.exit("\033[31;1m%s\033[0m" % e)
-
-        elif method == "get":
-            args = ""
-            for k, v in data.items():
-                args += "&%s=%s" % (k, v)
-            args = args[1:]
-
-            url_with_asset_data = "%s&%s" % (url, args)
-
-            try:
-                req = urllib2.Request(url_with_asset_data)
-                req_data = urllib2.urlopen(req, timeout=settings.Params['request_timeout'])
-                callback = req_data.read()
-                print "-->server response:", type(callable), callback
-                return callback
-            except urllib2.URLError, e:
+            except Exception as e:
                 sys.exit("\033[31;1m%s\033[0m" % e)
 
         return 'msg'
@@ -121,14 +111,15 @@ class Mercurial(object):
 
     def write_uid_into_file(self, asset_uid_from_server):
         asset_uid = json.loads(asset_uid_from_server).get('asset_uid')
-        print type(asset_uid), asset_uid
+        print(type(asset_uid), asset_uid)
+
         if asset_uid:
             try:
                 local_asset_id_file = settings.Params['local_asset_id_file']
-                local_asset_id = file(local_asset_id_file).read().strip()
+                local_asset_id = open(local_asset_id_file).read().strip()
                 if str(asset_uid) != str(local_asset_id):
                     file_obj = open(local_asset_id_file, 'w')
                     file_obj.write(asset_uid)
                     file_obj.close()
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)

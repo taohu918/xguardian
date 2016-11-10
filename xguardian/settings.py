@@ -131,3 +131,5 @@ STATICFILES_DIRS = (
 
 AUTH_USER_MODEL = 'userauth.UserProfile'
 TOKEN_TIMEOUT = 120
+
+LOGIN_URL = '/eyes/login/'

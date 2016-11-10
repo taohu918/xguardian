@@ -3,10 +3,11 @@
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
 from assets import models
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
-
+@login_required
 def index(request):
     return render(request, 'index.html', )
 
@@ -92,19 +93,20 @@ class NumFactory(object):
         return paginate
 
 
+@login_required
 def assets(request):
     page_id = request.GET.get('pid', 1)
     model_obj = models.Server.objects.all()
     page_obj = NumFactory(page_id)
-    data = model_obj[page_obj.start:page_obj.end]
+    # data = model_obj[page_obj.start:page_obj.end]
+    data = model_obj
     all_rows = model_obj.count()
 
-    # data = range(200)[page_obj.start:page_obj.end]
-    all_rows = 200
     paginations = page_obj.pagination(all_rows, '/eyes/assets/?pid=')
     return render(request, 'assets.html', {'data': data, 'pagination': paginations})
 
 
+@login_required
 def details(request, uid):
     obj = models.Server.objects.get(uid=uid)
     # o = obj.os_set.select_related()
@@ -115,11 +117,12 @@ def details(request, uid):
     return render(request, 'details.html', {'asset': obj})
 
 
+@login_required
 def modifylog(request):
     uid = request.GET.get('uid')
     if uid:
         obj = models.EventLog.objects.filter(asset_uid_id=uid).order_by('create_time').reverse()
         return render(request, 'modify.html', {'modify_obj': obj, 'asset_uid': uid})
     else:
-        obj = models.EventLog.objects.all()
+        obj = models.EventLog.objects.all().order_by('create_time').reverse()
         return render(request, 'modifylog.html', {'modifylog_obj': obj})

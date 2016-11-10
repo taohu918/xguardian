@@ -20,9 +20,7 @@ class DataValidityCheck(object):
         self.mandatory_keys = ['sn', 'asset_uid', 'asset_type', 'kinds']
         self.field_sets = {
             'asset': ['manufactory'],
-            'server': [
-                'model', 'cpu_count', 'cpu_core_count', 'cpu_model', 'raid_type', 'os_type', 'os_distribution',
-                'os_release'],
+            'server': ['model', 'cpu_count', 'cpu_core_count', 'cpu_model', 'raid_type', 'os_type'],
             'networkdevice': []
         }
         self.response = {
@@ -42,7 +40,6 @@ class DataValidityCheck(object):
 
     def data_is_valid(self):
         """校验数据是否可用"""
-        # self.request.data --> QueryDict
         data = self.request.data.get("asset_data")  # unicode
         if data:
             try:
@@ -113,7 +110,9 @@ class DataValidityCheck(object):
 
     def generate_asset_uid(self):
         import hashlib
-        unique_str = "%s%s%s" % (self.clean_data['sn'], self.clean_data['asset_type'], self.clean_data['kinds'])
+        unique_str = "%s%s%s%s" % (
+            self.clean_data['sn'], self.clean_data['uuid'],
+            self.clean_data['asset_type'], self.clean_data['kinds'])
 
         obj = hashlib.md5()
         obj.update(unique_str)
@@ -126,8 +125,7 @@ class DataValidityCheck(object):
 
 class Handler(DataValidityCheck):
     def data_incorporated(self):
-        # if data_is_valid return True, then this func will be called.
-        if self.data_validation:
+        if self.data_validation:  # if data_is_valid return True, then this func will be called.
             if self.agent_asset_uid == '0':
                 self.create_method(self.clean_data['asset_type'])
             else:
@@ -162,8 +160,9 @@ class Handler(DataValidityCheck):
     def __add_server_obj(self, ignore_errs=False, only_check_sn=False):
         try:
             if models.Server.objects.filter(uid=self.asset_uid):
-                self.response_msg('error', '__add_server_obj', u'资产uid已存在 %s' % self.asset_uid)
-                log_handler(None, '__add_server_obj', self.request.user, u'资产uid已存在 %s' % self.asset_uid, event_type=4,
+                self.response_msg('error', '__add_server_obj', u'asset uid existed %s' % self.asset_uid)
+                log_handler(None, '__add_server_obj', self.request.user, u'asset uid existed %s' % self.asset_uid,
+                            event_type=4,
                             component='server')
 
             self.field_verify(self.clean_data, 'model', str, mth='__add_server_obj')
@@ -179,7 +178,7 @@ class Handler(DataValidityCheck):
                 obj.save()
 
                 log_msg = "Asset<%s> add new [server] record ." % self.asset_uid
-                self.response_msg('info', '__add_server_obj', log_msg)
+                self.response_msg('info', '__add_server_obj', u'%s' % log_msg)
                 log_handler(obj, '__add_server_obj', self.request.user, log_msg, event_type=1, component='server')
 
                 self.add_successful = True
@@ -234,13 +233,15 @@ class Handler(DataValidityCheck):
 
                 log_msg = "Asset<%s> add new [cpu] record with data [%s]" % (self.asset_uid, data_set)
                 self.response_msg('info', '__add_cpu_component', log_msg)
-                log_handler(self.server_obj, '__add_cpu_component', self.request.user, log_msg, event_type=1, component='CPU')
+                log_handler(self.server_obj, '__add_cpu_component', self.request.user, log_msg, event_type=1,
+                            component='CPU')
 
                 self.add_successful = True
 
         except Exception as e:
             self.response_msg('error', '__add_cpu_component', str(e))
-            log_handler(self.server_obj, '__add_cpu_component', self.request.user, str(e), event_type=4, component='CPU')
+            log_handler(self.server_obj, '__add_cpu_component', self.request.user, str(e), event_type=4,
+                        component='CPU')
             self.add_successful = False
 
     def __add_disk_component(self):
@@ -269,7 +270,8 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_disk_component', log_msg)
-                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg, event_type=1,
+                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg,
+                                        event_type=1,
                                         component='Disk')
 
                             self.add_successful = True
@@ -286,7 +288,8 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [disk] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_disk_component', log_msg)
-                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg, event_type=1,
+                            log_handler(self.server_obj, '__add_disk_component', self.request.user, log_msg,
+                                        event_type=1,
                                         component='Disk')
 
                             self.add_successful = True
@@ -365,7 +368,8 @@ class Handler(DataValidityCheck):
 
                             log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_ram_component', log_msg)
-                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg, event_type=1,
+                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg,
+                                        event_type=1,
                                         component='RAM')
 
                             self.add_successful = True
@@ -374,14 +378,15 @@ class Handler(DataValidityCheck):
                         if not len(self.response['error']):
                             data_set = {
                                 'asset_uid': self.server_obj,
-                                'model': ram_item.get('model'),
+                                'capacity': ram_item.get('capacity'),
                             }
                             obj = models.RAM(**data_set)
                             obj.save()
 
                             log_msg = "Asset<%s> add new [ram] record with data [%s]" % (self.asset_uid, data_set)
                             self.response_msg('info', '__add_ram_component', log_msg)
-                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg, event_type=1,
+                            log_handler(self.server_obj, '__add_ram_component', self.request.user, log_msg,
+                                        event_type=1,
                                         component='RAM')
 
                             self.add_successful = True
@@ -588,7 +593,11 @@ class Handler(DataValidityCheck):
 
 def log_handler(server_obj, event_name, user, detail, event_type=1, component=None, memo=None):
     if not user.id:
-        user = UserProfile.objects.filter(is_admin=True).last()
+        # user = UserProfile.objects.filter(is_admin=True).last()
+        # user_id = user.id
+        user_id = None
+    else:
+        user_id = user.id
 
     if not memo:
         memo = 'no memo.'
@@ -601,7 +610,7 @@ def log_handler(server_obj, event_name, user, detail, event_type=1, component=No
             asset_uid=server_obj,
             event_name=event_name,
             event_type=event_type,
-            user_id=user.id,
+            user_id=user_id,
             detail=detail,
             component=component,
             memo=memo)
@@ -609,5 +618,5 @@ def log_handler(server_obj, event_name, user, detail, event_type=1, component=No
         log_obj.save()
         return True
     except Exception as e:
-        print(e)
+        print('log_handler', e)
         return False

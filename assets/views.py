@@ -11,6 +11,7 @@ from assets.utilsbox import decorations
 from assets.utilsbox.data_handler import Handler
 import json
 from assets import models
+from assets.utilsbox.log import logger
 
 
 def mmth(request):
@@ -32,10 +33,7 @@ class ServerReport(APIView):
             msg = json.dumps({'asset_uid': asset_handler.asset_uid})
         else:
             msg = json.dumps({'asset_uid': False})
-        print
-        asset_handler.response
-        return HttpResponse(msg)
 
-    def get(self, request):
-        pa = request.get_full_path()
-        return HttpResponse(pa)
+        logger.info(asset_handler.response)
+        # print('ServerReport.port', asset_handler.response)
+        return HttpResponse(msg)
