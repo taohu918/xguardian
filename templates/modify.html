@@ -25,7 +25,8 @@
         <tbody>
         {% for i in modify_obj %}
             <tr>
-                <td style="text-align: center;"><a href="/eyes/details/{{ i.asset_uid_id }}/">{{ forloop.counter }}</a></td>
+                <td style="text-align: center;"><a href="/eyes/details/{{ i.asset_uid_id }}/">{{ forloop.counter }}</a>
+                </td>
                 <td>{{ i.event_name }}</td>
                 <td style="text-align: center;">{{ i.event_type }}</td>
                 <td>{{ i.detail }}</td>
@@ -35,16 +36,13 @@
         {% endfor %}
         </tbody>
     </table>
+
 {% endblock %}
 
 {% block js %}
-
-    {#    <script type="text/javascript" charset="'utf-8" src="https://code.jquery.com/jquery-1.12.3.js"></script>#}
-    <script type="text/javascript" charset="utf8" src="/static/js/3rd/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="/static/js/3rd/jquery.dataTables.js"></script>
     <script type="text/javascript" charset="utf8" src="/static/js/3rd/dataTables.bootstrap.js"></script>
-    <script type="text/javascript" charset="'utf-8"
-            src="https://cdn.datatables.net/plug-ins/1.10.12/pagination/ellipses.js"></script>
-
+    <script type="text/javascript" charset="'utf-8" src="/static/js/3rd/ellipses.js"></script>
 
     <script>
         $(document).ready(function () {

@@ -236,7 +236,8 @@ class EventLog(models.Model):
         (4, u'add_err'),
     )
 
-    asset_uid = models.ForeignKey('Server', null=True, blank=True)
+    # asset_uid = models.ForeignKey('Server', null=True, blank=True)
+    asset_uid = models.ForeignKey('Server')
     user = models.ForeignKey('userauth.UserProfile', verbose_name=u'事件源')
     event_name = models.CharField(max_length=128, verbose_name=u'事件名称')
     event_type = models.SmallIntegerField(choices=event_choice, default=1, verbose_name=u'事件类型')

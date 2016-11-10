@@ -114,15 +114,16 @@ def details(request, uid):
     # for i in o:
     #     print i
     # o = obj.os_set.get_os_types_choice_display()
+    # print(uid, obj, obj.eventlog_set.select_related())
     return render(request, 'details.html', {'asset': obj})
 
 
 @login_required
 def modifylog(request):
-    uid = request.GET.get('uid')
-    if uid:
-        obj = models.EventLog.objects.filter(asset_uid_id=uid).order_by('create_time').reverse()
-        return render(request, 'modify.html', {'modify_obj': obj, 'asset_uid': uid})
-    else:
-        obj = models.EventLog.objects.all().order_by('create_time').reverse()
-        return render(request, 'modifylog.html', {'modifylog_obj': obj})
+    # uid = request.GET.get('uid')
+    # if uid:
+    #     obj = models.EventLog.objects.filter(asset_uid_id=uid).order_by('create_time').reverse()
+    #     return render(request, 'modify.html', {'modify_obj': obj, 'asset_uid': uid})
+    # else:
+    obj = models.EventLog.objects.all().order_by('create_time').reverse()
+    return render(request, 'modifylog.html', {'modifylog_obj': obj})

@@ -15,6 +15,7 @@ import plugin_dispatcher
 import token_generator
 from conf import settings
 
+
 # py 3
 # from xagent.coremth import plugin_dispatcher
 # from xagent.coremth import token_generator
@@ -42,8 +43,7 @@ class Mercurial(object):
         asset_data = obj.run()
         asset_data['kinds'] = settings.Params['kinds']
         print('\033[1;33m %s \033[0m' % __file__)
-        print(json.dumps(asset_data, indent=4))
-        # return asset_data
+        print(json.dumps(asset_data, indent=4, sort_keys=True))
 
     def report_data(self):
         obj = plugin_dispatcher.Collector()

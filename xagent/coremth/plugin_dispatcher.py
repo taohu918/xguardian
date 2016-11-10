@@ -24,5 +24,5 @@ class Collector(object):
             res = cls.collect()
             return res
 
-        except Exception, e:
+        except Exception as e:
             return e

@@ -69,15 +69,9 @@
 
 <script src="{% static "js/3rd/jQuery_v2.1.1/jquery-2.1.1.js" %}"></script>
 <script src="{% static "js/3rd/bootstrap/bootstrap.js" %}"></script>
-
 {% block js %}{% endblock %}
 
-<script>
-    $(function () {
-        {#        $('body').animate({scrollTop: 0}, 200);#}
-        $('body').scrollTop(0);
-    });
-</script>
+<script src="{% static "js/src/scrollTop.js" %}"></script>
 
 </body>
 </html>

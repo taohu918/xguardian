@@ -5,14 +5,15 @@
     <ol class="breadcrumb">
         <li><a href="/eyes/modifylog/">变更记录</a></li>
     </ol>
-    <table id="data_list" class="hover">
+    <table id="data_list" class="hover  table-bordered">
         <thead>
         <tr>
-            <th>编号</th>
-            <th>事件名称</th>
-            <th>事件类型</th>
-            <th>事件详情</th>
-            <th>操作人员</th>
+            <th style="width: 30px; text-align: center;">编号</th>
+            <th style="width: 50px; text-align: center;">事件名称</th>
+            <th style="width: 40px; text-align: center;">事件类型</th>
+            <th style="text-align: center;">事件详情</th>
+            <th style="width: 40px; text-align: center;">操作人员</th>
+            <th style="width: 100px; text-align: center;">修改时间</th>
         </tr>
         </thead>
         <tbody>
@@ -23,6 +24,7 @@
                 <td>{{ i.event_type }}</td>
                 <td>{{ i.detail }}</td>
                 <td>{{ i.user }}</td>
+                <td>{{ i.create_time }}</td>
             </tr>
         {% endfor %}
         </tbody>

@@ -110,9 +110,11 @@ class DataValidityCheck(object):
 
     def generate_asset_uid(self):
         import hashlib
+        if 'uuid' not in self.clean_data:
+            self.clean_data['uuid'] = None
         unique_str = "%s%s%s%s" % (
-            self.clean_data['sn'], self.clean_data['uuid'],
-            self.clean_data['asset_type'], self.clean_data['kinds'])
+            self.clean_data['asset_type'], self.clean_data['kinds'],
+            self.clean_data['sn'], self.clean_data['uuid'])
 
         obj = hashlib.md5()
         obj.update(unique_str)
