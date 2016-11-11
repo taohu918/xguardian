@@ -6,36 +6,53 @@
 # sys.setdefaultencoding("utf-8")
 
 import os
+import sys
 import commands
 import re
+import subprocess
+
+
+def data_format_convert(data):
+    if sys.version.split('.')[0] == '3':
+        data = str(data, encoding='utf-8')
+    elif sys.version.split('.')[0] == '2':
+        data = str(data)
+    return data
 
 
 class DiskPlugin(object):
-    def centos(self):
-        result = {'physical_disk_driver': []}
+    grep_pattern = {'Slot': 'slot', 'Raw Size': 'capacity', 'Inquiry': 'model', 'PD Type': 'iface_type'}
 
-        try:
-            script_path = os.path.dirname(os.path.abspath(__file__))
-            prepare_step = commands.getstatusoutput("chmod +x %s/MegaCli" % script_path)
+    def diskinfo(self):
+        result = {'physical_diskinfo_driver': []}
+        script_path = os.path.dirname(os.path.abspath(__file__))
 
-            shell_command = "sudo %s/MegaCli  -PDList -aALL" % script_path
-            output = commands.getstatusoutput(shell_command)
-            result['physical_disk_driver'] = self.parse(output[1])
+        s1 = subprocess.Popen("chmod +x %s/MegaCli" % script_path,
+                              shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if s1.stderr.read():
+            exit("chmod +x %s/MegaCli failed .. " % script_path)
 
-        except Exception as e:
-            result['error'] = e
+        s2 = subprocess.Popen("sudo %s/MegaCli  -PDList -aALL" % script_path,
+                              shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if s2.stderr.read():
+            exit("sudo %s/MegaCli  -PDList -aALL failed .. " % script_path)
+
+        s2_output = s2.stdout.read()
+        s2_output = data_format_convert(s2_output)
+
+        result['physical_diskinfo_driver'] = self.parse(s2_output)
+
         return result
 
     def parse(self, content):
-        """
-        解析shell命令返回结果
-        :param content: shell 命令结果
-        :return:解析后的结果
-        """
+        # 重构数据结构: 对获取的 diskinfo 数据进行重构
         response = []
         result = []
+
+        # 对字符串进行分段, result 临时列表
         for row_line in content.split("\n\n\n\n"):
             result.append(row_line)
+
         for item in result:
             temp_dict = {}
             for row in item.split('\n'):
@@ -59,17 +76,19 @@ class DiskPlugin(object):
             if temp_dict:
                 response.append(temp_dict)
 
-        # TODO: 如果是 虚拟机
+        # TODO: 如果是不是物理机
         if not response:
-            output_vm = commands.getstatusoutput("df | sed 1d | awk '{SUM +=$2} END {print SUM}'")
-            capacity = int(output_vm[1]) / 1024 / 1024
-            response.append({'capacity': capacity})
+            s3 = subprocess.Popen("df | sed 1d | awk '{SUM +=$2} END {print SUM}'",
+                                  shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            s3_output = s3.stdout.read()
+            capacity = int(s3_output) / 1024 / 1024
+            response.append({'capacity': capacity, 'iface_type': 'not a physics machine'})
 
         return response
 
     def mega_patter_match(self, needle):
-        grep_pattern = {'Slot': 'slot', 'Raw Size': 'capacity', 'Inquiry': 'model', 'PD Type': 'iface_type'}
-        for key, value in grep_pattern.items():
+        # grep_pattern = {'Slot': 'slot', 'Raw Size': 'capacity', 'Inquiry': 'model', 'PD Type': 'iface_type'}
+        for key, value in self.grep_pattern.items():
             if needle.startswith(key):
                 return value
         return False
@@ -82,14 +101,16 @@ class Main(DiskPlugin):
         raw_data = {}
 
         for key in filter_keys:
-            try:
-                res = commands.getoutput("sudo dmidecode -t system|grep '%s'" % key).strip()
-                res_validate = res.split(':')[1].strip()
-                raw_data[key] = res_validate
+            res = subprocess.Popen("sudo dmidecode -t system|grep '%s'" % key,
+                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.stderr.read():
+                exit("sudo dmidecode -t system|grep '%s'" % key)
 
-            except Exception as e:
-                print(e)
-                raw_data[key] = 'ErrorMsg'
+            res_output = res.stdout.read()
+            res_output = data_format_convert(res_output)
+
+            res_validate = res_output.split(':')[1].strip()
+            raw_data[key] = res_validate
 
         data = {
             "asset_type": 'server',
@@ -104,15 +125,26 @@ class Main(DiskPlugin):
         data.update(self.cpuinfo)
         data.update(self.raminfo)
         data.update(self.osinfo)
-        data.update(self.centos())
+        data.update(self.diskinfo())
+        print(data)
         return data
 
     @property
     def nicinfo(self):
-        # print('nicinfo')
-        # tmp_f = file('/tmp/bonding_nic').read()
-        # raw_data= subprocess.check_output("ifconfig -a",shell=True)
-        raw_data = commands.getoutput("ifconfig -a").split("\n")
+        # nics = []
+        # nic_res = subprocess.Popen("ifconfig -a | awk '{print $1}' | grep -i e | egrep -vi 'inet|Interrupt'",
+        #                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # if nic_res.stderr.read():
+        #     exit("ifconfig -a | awk '{print $1}' | grep -i e | egrep -vi 'inet|Interrupt' failed .. ")
+        #
+        # nic_res_output = nic_res.stdout.read()
+        # nic_res_output = data_format_convert(nic_res_output)
+        # for nic in nic_res_output.split('\n'):
+        #     nics.append(nic)
+
+        res = subprocess.Popen("ifconfig -a", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        raw_data = res.stdout.read()
+        raw_data = data_format_convert(raw_data).split("\n")
 
         nic_dic = {}
         next_line = False
@@ -170,7 +202,6 @@ class Main(DiskPlugin):
 
     @property
     def cpuinfo(self):
-        # print('cpuinfo')
         raw_data = {
             'cpu_model': "cat /proc/cpuinfo | grep 'model name' | head -1 | awk -F':' '{print $2}'",
             'physical_count': "cat /proc/cpuinfo | grep 'physical id' | sort | uniq | wc -l",
@@ -178,11 +209,7 @@ class Main(DiskPlugin):
         }
 
         for k, cmd in raw_data.items():
-            try:
-                # cmd_res = subprocess.check_output(cmd,shell=True)
-                raw_data[k] = commands.getoutput(cmd).strip()
-            except ValueError as e:
-                print(e)
+            raw_data[k] = commands.getoutput(cmd).strip()
 
         return raw_data
 
@@ -259,5 +286,10 @@ class Main(DiskPlugin):
 
 
 if __name__ == "__main__":
-    obj = Main()
-    obj.collect()
+    import logging
+
+    try:
+        obj = Main()
+        obj.collect()
+    except Exception as e:
+        logging.exception(e)

@@ -5,6 +5,7 @@
 # reload(sys)
 # sys.setdefaultencoding("utf-8")
 import sys
+import logging
 from coremth import Dominator
 
 
@@ -22,4 +23,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception(e)
