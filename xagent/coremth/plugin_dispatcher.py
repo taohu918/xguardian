@@ -19,9 +19,9 @@ class Collector(object):
         try:
             module = importlib.import_module('plugins.api.%s' % self.platform)
             cls = getattr(module, 'Main')()  # TODO: how important the parenthese is
+            res = cls.collect()
             # mth = getattr(cls, 'collect')
             # res = mth()
-            res = cls.collect()
             return res
 
         except Exception as e:
