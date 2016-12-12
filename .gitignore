@@ -1,5 +1,6 @@
 # self define
 .idea/
+about.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
