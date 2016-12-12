@@ -1,5 +1,5 @@
-# self define
-.idea/
+env
+.idea
 about.md
 
 # Byte-compiled / optimized / DLL files
