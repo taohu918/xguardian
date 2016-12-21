@@ -1,12 +1,35 @@
 # -*- coding: utf-8 -*-
 # __author__: taohu
-from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+import json
+import sys
+
+import threading
+from assets.utilsbox import api_paramiko
 from django.contrib.auth import authenticate, login, logout
-from assets import models
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
+
+from assets import models
+
+if sys.version.split('.')[0] == '3':
+    import queue
+
+    q = queue.Queue(maxsize=1000)
+    upload_q = queue.Queue(maxsize=1000)
+elif sys.version.split('.')[0] == '2':
+    import Queue
+
+    q = Queue.Queue(maxsize=1000)
+    upload_q = Queue.Queue(maxsize=1000)
 
 
 # Create your views here.
+@csrf_exempt
+def post_test(request):
+    return HttpResponse('this is a test func.')
+
+
 @login_required
 def index(request):
     return render(request, 'index.html', )
@@ -31,79 +54,11 @@ def account_logout(request):
     return HttpResponseRedirect('/eyes/login/')
 
 
-# TODO: 分页
-class NumFactory(object):
-    page_total = 20
-
-    def __init__(self, page_id):
-        self.page_id = int(page_id)
-        self.page_show_num = NumFactory.page_total
-
-    # 内容条目
-    @property
-    def start(self):
-        return (self.page_id - 1) * self.page_show_num
-
-    @property
-    def end(self):
-        return self.page_id * self.page_show_num
-
-    def pagination(self, all_rows, url):
-        quotient, remainder = divmod(all_rows, self.page_show_num)
-
-        # 确定最后一页页码
-        if remainder > 0:
-            quotient += 1
-
-        # 确定起始页、结束页页码
-        if quotient <= 11:  # 总页数少于 11 时
-            start = 1
-            end = quotient
-        else:  # 总页数大于 11 时
-            if self.page_id < 6:
-                start = 1
-                end = 11
-            else:
-                start = self.page_id - 5
-                end = self.page_id + 5
-                if end > quotient:
-                    end = quotient
-                    start = quotient - 11
-
-        paginate = ''
-        for i in range(start, end + 1):  # end + 1, 否则分页码少一
-            if i == self.page_id:
-                temp = "<li class='active'><a href='%s%s'>%s<span class='sr-only'>(current)</span></a></li>" \
-                       % (url, i, i)
-            else:
-                temp = "<li><a href='%s%s'>%s</a></li>" % (url, i, i)
-            paginate += temp
-
-        if self.page_id > 1:
-            last_page = "<li><a href='%s%s'>&laquo;</a><li>" % (url, self.page_id - 1)
-        else:
-            last_page = "<li><a href='javascript:void(0)'>&laquo;</a></li>"
-
-        if self.page_id >= quotient:
-            next_page = "<li><a href='javascript:void(0)'>&raquo;</a></li>"
-        else:
-            next_page = "<li><a href='%s%s'>&raquo;</a></li>" % (url, self.page_id + 1)
-
-        paginate = "<nav> <ul class='pagination'>" + last_page + paginate + next_page + "</ul> </nav>"
-        return paginate
-
-
 @login_required
 def assets(request):
-    page_id = request.GET.get('pid', 1)
     model_obj = models.Server.objects.all()
-    page_obj = NumFactory(page_id)
-    # data = model_obj[page_obj.start:page_obj.end]
     data = model_obj
-    all_rows = model_obj.count()
-
-    paginations = page_obj.pagination(all_rows, '/eyes/assets/?pid=')
-    return render(request, 'assets.html', {'data': data, 'pagination': paginations})
+    return render(request, 'assets.html', {'data': data})
 
 
 @login_required
@@ -116,6 +71,136 @@ def details(request, uid):
     # o = obj.os_set.get_os_types_choice_display()
     # print(uid, obj, obj.eventlog_set.select_related())
     return render(request, 'details.html', {'asset': obj})
+
+
+@login_required
+def net_res(request):
+    return render(request, 'net_res.html')
+
+
+def get_idc_list(request):
+    data = []
+    # obj = models.IDC.objects.all().values('area')
+    obj = models.IDC.objects.all()
+    for item in obj:
+        num = models.Server.objects.filter(idc_id=item.id).count()
+        data.append({'name': item.name, 'value': num})
+    # print(data)
+    return HttpResponse(json.dumps(data))
+
+
+def get_idc_bw(request):
+    data = []
+    obj = models.IDC.objects.all()
+    for item in obj:
+        data.append({'name': item.name, 'value': item.bandwidth.split('Mb')[0]})
+    return HttpResponse(json.dumps(data))
+
+
+def lotupload(request):
+    import os
+    err_msg = ''
+    if request.method == "POST":
+        if request.FILES:
+            file_data = request.FILES
+            file_obj = file_data.get('file_name')
+            # print(file_obj.name, file_obj.size)
+
+            file_path = os.path.join('static/upload/', file_obj.name)
+            f = open(file_path, 'wb')
+            for line in file_obj.chunks():
+                f.write(line)
+            f.close()
+
+            # 保存信息到数据库
+            info = request.POST['info']
+            obj_type = request.POST['type']
+            info_dic = {'info': info, 'obj_type': obj_type, 'path': file_path}
+            # print(info_dic)
+
+            models.UploadObj.objects.create(**info_dic)
+            return HttpResponseRedirect('/eyes/lotupload/')
+
+        else:
+            err_msg = '请选择文件'
+
+    return render(request, 'upload.html', {'err_msg': err_msg})
+
+
+def excel_to_db(excel):
+    pass
+
+
+def batch(request):
+    return render(request, 'batch_processing.html')
+
+
+def post_cmds(request):
+    cmds_str = request.POST.get('cmds_str', False)
+    ip_str = request.POST.get('ip_str', False)
+
+    paramiko_obj = api_paramiko.APIParamiko()
+    num = len(ip_str.split(','))
+    for host in ip_str.split(','):
+        t = threading.Thread(target=paramiko_obj.ssh_exec_cmd, args=(host, 'root', 22, cmds_str, q))
+        t.start()
+    return HttpResponse(json.dumps(num))
+
+
+def get_cmds_res(request):
+    try:
+        cmds_res = q.get(timeout=5)
+        ip = cmds_res.keys()[0]
+        command_format = '\n%s:\nCommand: %s   StartTime: %s   Cost: %s \nResult: %s' % (
+            cmds_res.keys()[0], cmds_res[ip][2], cmds_res[ip][0], cmds_res[ip][1], cmds_res[ip][3])
+        return HttpResponse(json.dumps(command_format))
+    except Exception as e:
+        print(e)
+        return HttpResponse('false')
+
+
+def file_distribution(request):
+    if request.method == 'POST':
+        from assets.utilsbox import form_verify
+
+        target_host = request.POST['target_host']
+        target_path = request.POST['target_path']
+        source_file = request.POST['source_file']
+        num = len(target_host.split(','))
+
+        uf = form_verify.UploadObj(request.POST, request.FILES)  # form验证字段应与表单中的name对应, 即表单传什么我就验证什么
+        if uf.is_valid():
+            # 获取表单信息 {key: value}
+            upload_obj = uf.cleaned_data['upload_obj']  # 根据表单元素的 name 获取其 value
+            # target_host = uf.cleaned_data['target_host']
+
+            # 写入数据库
+            upload = models.UploadObj()
+            upload.path = upload_obj
+            upload.save()
+
+            for host in target_host.split(','):
+                trans_obj = api_paramiko.APIParamiko()
+                t = threading.Thread(
+                    target=trans_obj.obj_upload,
+                    args=(host, 'root', 22, source_file, target_path, upload_q)
+                )
+                t.start()
+        return HttpResponse(json.dumps(num))
+    else:
+        return render(request, 'serverManage/file_distribution.html')
+
+
+def get_distribution_res(request):
+    try:
+        distribution_res = upload_q.get(timeout=5)
+        ip = distribution_res.keys()[0]
+        result = '\n%s:\nFile: %s   StartTime: %s   Cost: %s \nResult: %s' % (
+            ip, distribution_res[ip][2], distribution_res[ip][0], distribution_res[ip][1], distribution_res[ip][3])
+        return HttpResponse(json.dumps(result))
+    except Exception as e:
+        print(e)
+        return HttpResponse('false')
 
 
 @login_required

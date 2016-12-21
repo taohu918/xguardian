@@ -113,6 +113,12 @@ class LogPublic(object):
         LogPublic.__logger.critical(message)
         set_color(ForeGround_White)
 
+    @staticmethod
+    def details(message):
+        set_color(ForeGround_Red)
+        LogPublic.__logger.exception(message)
+        set_color(ForeGround_White)
+
 
 logger = LogPublic.get_logger(logging.INFO)
 # print id(logger)
@@ -125,3 +131,4 @@ if __name__ == '__main__':
     logger.warn("warn message")
     logger.error("error message")
     logger.critical("critical message")
+    logger.details(1 / 0)

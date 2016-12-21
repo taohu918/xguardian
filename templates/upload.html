@@ -1,0 +1,57 @@
+{% extends 'index.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="/static/bootstrap_plugin/bootstrap-select.css">
+    <link rel="stylesheet" href="/static/bootstrap_plugin/fileinput.css"/>
+{% endblock %}
+
+{% block content %}
+    {#    <div style="height: 30px;"></div>#}
+
+    <div style="margin-top: 33px;">
+        <form action="/eyes/lotupload/" method="post"
+              enctype="multipart/form-data" class="form-horizontal" role="form">{% csrf_token %}
+            <div class="form-group">
+                <label for="info" class="col-xs-2 control-label">描述信息</label>
+
+                <div class="col-xs-8">
+                    <input type="text" id="info" name="info" class="form-control" placeholder="资源描述">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="file" class="col-xs-2 control-label">选择文件</label>
+
+                <div class="col-xs-8">
+                    <input type="file" id="file-0a" name="file_name" class="file" multiple data-min-file-count="1">
+                    <span style="color: red;">{{ err_msg }}</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="type" class="col-xs-2 control-label">文件类型</label>
+
+                <div class="col-xs-8">
+                    <select id="type" name="type" class="selectpicker show-tick form-control" data-live-search="true">
+                        <option>img</option>
+                        <option>file</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary col-xs-offset-2">Submit</button>
+
+        </form>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="/static/bootstrap_plugin/bootstrap-select.js"></script>
+    <script src="/static/bootstrap_plugin/fileinput.js"></script>
+    <script>
+        $(function () {
+            $("#assets").removeClass("hiding");
+            $("#lotupload").addClass("sub_item");
+        });
+    </script>
+{% endblock %}

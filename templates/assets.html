@@ -7,7 +7,8 @@
 
 {% block content %}
     <ol class="breadcrumb">
-        <li><a href="/eyes/assets/">资产列表</a></li>
+        <li><a href="{% url 'index' %}">资产管理</a></li>
+        <li><a href="{% url 'assets' %}">设备信息</a></li>
     </ol>
     <table id="data_list" class="hover" cellspacing="0" width="100%">
         <thead>

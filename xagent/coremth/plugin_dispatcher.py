@@ -16,13 +16,7 @@ class Collector(object):
         """
         :return: the system info from local server
         """
-        try:
-            module = importlib.import_module('plugins.api.%s' % self.platform)
-            cls = getattr(module, 'Main')()  # TODO: how important the parenthese is
-            res = cls.collect()
-            # mth = getattr(cls, 'collect')
-            # res = mth()
-            return res
-
-        except Exception as e:
-            return e
+        module = importlib.import_module('plugins.%s' % self.platform)
+        cls = getattr(module, 'Main')()  # TODO: how important the parenthese is
+        res = cls.collect()
+        return res

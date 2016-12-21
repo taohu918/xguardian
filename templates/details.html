@@ -4,7 +4,9 @@
 
 {% block content %}
     <ol class="breadcrumb">
-        <li><a href="/eyes/details/{{ asset.uid }}/">资产详情</a></li>
+        <li><a href="{% url 'index' %}">资产管理</a></li>
+        <li><a href="{% url 'assets' %}">设备信息</a></li>
+        <li><a href="{% url 'details' asset.uid %}">资产详情</a></li>
         {#        <li><a href="#">硬件信息</a></li>#}
         {#        <li><a href="/eyes/modifylog/?uid={{ asset.uid }}">变更记录</a></li>#}
     </ol>
@@ -62,7 +64,8 @@
                             {% endfor %}
                         </td>
                         <td class="col-xs-2 bold">OS类型</td>
-                        <td class="col-xs-5">: {% for os in asset.os_set.select_related %}{{ os.os_type }}{% endfor %}</td>
+                        <td class="col-xs-5">:
+                            {% for os in asset.os_set.select_related %}{{ os.os_type }}{% endfor %}</td>
                     </tr>
                     <tr>
                         <td class="col-xs-2 bold">OS Distribution</td>
@@ -82,13 +85,13 @@
                         <td class="col-xs-2 bold">CPU型号</td>
                         <td class="col-xs-4">: {{ asset.cpu.cpu_model }}</td>
                         <td class="col-xs-2 bold">CPU颗数</td>
-                        <td class="col-xs-5">: {{ asset.cpu.physical_count }}</td>
+                        <td class="col-xs-5">: {{ asset.cpu.cpu_socket }}</td>
                     </tr>
                     <tr>
                         <td class="col-xs-2 bold">总内存</td>
                         <td class="col-xs-4">: {{ asset.ram_size }}</td>
-                        <td class="col-xs-2 bold">CPU核数</td>
-                        <td class="col-xs-5">: {{ asset.cpu.logic_count }}</td>
+                        <td class="col-xs-2 bold">CPU逻辑处理器数</td>
+                        <td class="col-xs-5">: {{ asset.cpu.cpu_processors }}</td>
                     </tr>
                     <tr>
                         <td class="col-xs-2 bold">总硬盘大小</td>
@@ -226,7 +229,7 @@
                         <tr>
                             <td class="">{{ disk.slot }}</td>
                             <td class="">{{ disk.capacity }}</td>
-                            <td class="">{{ disk.iface_type }}</td>
+                            <td class="">{{ disk.iface }}</td>
                             <td class="">{{ disk.manufactory }}</td>
                             <td class="">{{ disk.sn }}</td>
                             <td class="">{{ disk.create_time }}</td>
@@ -324,7 +327,8 @@
             </div>
 
             <div id="tab-config" class="tab-pane fade">
-                <h4 class="text-thin"><a class="btn-link" href="/admin/assets/asset/{{ asset_obj.id }}/" target="_blank">配置</a>
+                <h4 class="text-thin"><a class="btn-link" href="/admin/assets/asset/{{ asset_obj.id }}/"
+                                         target="_blank">配置</a>
                 </h4>
                 <p>只有管理管理员有权限修改资产信息.</p>
             </div>
@@ -349,6 +353,11 @@
                     $('#iframe').attr('src', 'http://172.16.79.150:3000/').height(450).css('border', 'thick double #CAFF70');
                     $(window).scrollTop(0);
                 }
-        )
+        );
+
+        $(function () {
+            $("#assets").removeClass("hiding");
+            $("#assets_info").addClass("sub_item");
+        });
     </script>
 {% endblock %}

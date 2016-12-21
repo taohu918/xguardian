@@ -14,7 +14,7 @@ import time
 def tokend_generator(user, ts, tokend):
     md5_format_str = "%s@%s:%s" % (user, ts, tokend)
     obj = hashlib.md5()
-    obj.update(md5_format_str)
+    obj.update(md5_format_str.encode('utf-8'))
     return obj.hexdigest()[10:17]
 
 
@@ -40,9 +40,10 @@ def token_validate(func):
             else:
                 response['errors'].append({"auth_failed": "Invalid username or token_id"})
         except Exception as e:
-            print(e)
+            # print(__file__, e, response)
             response['errors'].append({"auth_failed": "Invalid username or token_id"})
 
+        # print(__file__, response)
         if response['errors']:
             return HttpResponse(json.dumps(response))
         else:

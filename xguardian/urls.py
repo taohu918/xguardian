@@ -17,6 +17,7 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from assets import urls as assets_urls
 from eyes.views import index
+from eyes.views import post_test
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -24,4 +25,5 @@ urlpatterns = [
     url(r'^asset/', include(assets_urls)),
     url(r'eyes/', include('eyes.urls')),
     url(r'^$', index),
+    url(r'test/$', post_test),
 ]

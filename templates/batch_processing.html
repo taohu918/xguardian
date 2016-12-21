@@ -1,0 +1,93 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-sm-5" style="margin-top: 20px">
+            <div class="content_img_bgcolor">
+                <div style="margin-top: 5px;">
+                    <span>执行方式:</span>
+                    <select class="form-control" id="exe_mth" style="margin-top: 5px; font-size: 17px;">
+                        <option value="exe_mth_paramiko">paramiko</option>
+                        <option value="exe_mth_salt">salt</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <textarea class="form-control cmds_str" id="cmds_str" placeholder="请输入命令"></textarea>
+
+                    <textarea class="form-control ip_str" id="ip_str"
+                              placeholder="请输入IP (例如: 172.16.1.1,172.16.1.2)  不要用','结尾"></textarea>
+
+
+                    <div class="btn-group pull-right" style="margin-top: 5px">
+                        <button type="button" class="btn btn-default" onclick="post_cmds()"><span>执行</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-7">
+            <h4><span>返回结果:</span></h4>
+            <pre id="answer_area" class="answer_area"></pre>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        $('#exe_mth').change(function () {
+            var $panel = $('#ip_str');
+            if (this.value == 'exe_mth_salt') {
+                $panel.hide();
+            } else {
+                $panel.show();
+            }
+        });
+
+        function post_cmds() {
+            var cmds_str = $('#cmds_str').val();
+            var ip_str = $('#ip_str').val();
+            if (cmds_str && ip_str) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/eyes/post_cmds/',
+                    traditional: true,
+                    dataType: "json",
+                    data: {'cmds_str': cmds_str, 'ip_str': ip_str},
+                    success: function (data) {
+                        var msg = 'total' + data;
+                        $('#answer_area').text(msg);
+                        for (var i = 0; i < data; i++) {
+                            get_command_result();
+                        }
+
+                    },
+                    error: function (error_data) {
+                        // console.log(error_data)
+                    }
+                });//end ajax
+            } else {
+                $('#answer_area').text('请输入正确的命令和IP');
+            }
+        }//end function
+
+
+        function get_command_result() {
+            $.ajax({
+                type: 'GET',
+                url: '/eyes/get_cmds_res/',
+                traditional: true,
+                dataType: "json",
+                success: function (data) {
+                    $('#answer_area').append(data);
+                },
+                complete: function () {
+                    // get_command_result();
+                },
+                error: function (error_data) {
+                    // console.log(error_data)
+                }
+            });
+        }
+    </script>
+{% endblock %}

@@ -30,6 +30,7 @@ class IDC(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(unique=True, max_length=50, verbose_name=u'机房名称')
     area = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在地')
+    bandwidth = models.CharField(max_length=50, blank=True, null=True, verbose_name='带宽')
     tel = models.IntegerField(blank=True, null=True, verbose_name='联系电话')
 
     def __unicode__(self):
@@ -129,9 +130,13 @@ class OS(models.Model):
         ('centos', 'CentOS'),
         ('ubuntu', 'Ubuntu'))
     asset_uid = models.ForeignKey('Server')
-    os_type = models.CharField(choices=os_types_choice, max_length=50, default=1, verbose_name=u'系统类型')
-    os_distribution = models.CharField(choices=model_types_choices, max_length=50, default=1, verbose_name=u'软件/系统版本')
+    os_classification = models.CharField(choices=os_types_choice, max_length=50, default=1, verbose_name=u'系统类别')
+    os_codename = models.CharField(max_length=50, default=1, verbose_name=u'系统版本')
+    os_description = models.CharField(max_length=50, default=1, verbose_name=u'系统描述')
+    os_distributor = models.CharField(choices=model_types_choices, max_length=50, default=1, verbose_name=u'系统类型')
     os_release = models.CharField(max_length=50, blank=True, null=True)
+    create_time = models.DateTimeField(blank=True, auto_now_add=True)
+    update_time = models.DateTimeField(blank=True, auto_now=True)
 
     def __unicode__(self):
         return self.os_distribution
@@ -144,8 +149,9 @@ class OS(models.Model):
 class CPU(models.Model):
     asset_uid = models.OneToOneField('Server', unique=True)
     cpu_model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'CPU型号')
-    physical_count = models.SmallIntegerField(u'物理cpu颗数')
-    logic_count = models.SmallIntegerField(u'逻辑cpu核数')
+    cpu_socket = models.SmallIntegerField(u'物理cpu颗数')
+    cpu_cores = models.SmallIntegerField(u'核心数')
+    cpu_processors = models.SmallIntegerField(u'逻辑处理器数')
     create_time = models.DateTimeField(blank=True, auto_now_add=True)
     update_time = models.DateTimeField(blank=True, auto_now=True)
 
@@ -157,26 +163,6 @@ class CPU(models.Model):
         return self.cpu_model
 
 
-class RAM(models.Model):
-    asset_uid = models.ForeignKey('Server')
-    sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
-    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
-    slot = models.CharField(max_length=50, blank=True, null=True)
-    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='内存大小')
-    create_time = models.DateTimeField(auto_now_add=True)
-    update_time = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        # return '%s:%s:%s' % (self.asset_uid, self.slot, self.capacity)
-        return self.capacity
-
-    class Meta:
-        verbose_name = 'RAM'
-        verbose_name_plural = "RAM"
-
-    auto_create_fields = ['sn', 'slot', 'model', 'capacity']
-
-
 class Disk(models.Model):
     disk_iface_choice = (
         ('SATA', 'SATA'),
@@ -185,12 +171,11 @@ class Disk(models.Model):
         ('SSD', 'SSD'),
     )
     asset_uid = models.ForeignKey('Server')
-    sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
     model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'磁盘型号')
     slot = models.CharField(max_length=50, blank=True, null=True, verbose_name='插槽位')
-    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='磁盘容量GB')
+    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='MB')
     manufactory = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'制造商')
-    iface_type = models.CharField(max_length=16, choices=disk_iface_choice, default='SAS', verbose_name=u'接口类型')
+    iface = models.CharField(max_length=16, choices=disk_iface_choice, default='SAS', verbose_name=u'接口类型')
     create_time = models.DateTimeField(blank=True, auto_now_add=True)
     update_time = models.DateTimeField(blank=True, auto_now=True)
 
@@ -207,13 +192,12 @@ class Disk(models.Model):
 
 class NIC(models.Model):
     asset_uid = models.ForeignKey('Server')
-    sn = models.CharField(max_length=50, blank=True, null=True)
-    model = models.CharField(max_length=100, blank=True, null=True, verbose_name=u'网卡型号')
-    name = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'网卡名')
-    ip = models.GenericIPAddressField(max_length=32, blank=True, null=True)
-    mask = models.GenericIPAddressField(max_length=64, blank=True, null=True)
-    mac = models.CharField(max_length=32, unique=True, verbose_name=u'MAC')
     bonding = models.CharField(max_length=8, blank=True, null=True)
+    ip = models.GenericIPAddressField(max_length=32, blank=True, null=True)
+    mac = models.CharField(max_length=32, unique=True, verbose_name=u'MAC')
+    mask = models.GenericIPAddressField(max_length=64, blank=True, null=True)
+    model = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'网卡型号')
+    name = models.CharField(max_length=64, blank=True, null=True, verbose_name=u'网卡名')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 
@@ -226,6 +210,28 @@ class NIC(models.Model):
         # unique_together = ("asset_id", "slot")
 
     auto_create_fields = ['name', 'sn', 'model', 'mac', 'ip', 'mask', 'bonding']
+
+
+class RAM(models.Model):
+    asset_uid = models.ForeignKey('Server')
+    capacity = models.CharField(max_length=50, blank=True, null=True, verbose_name='内存大小MB')
+    manufactory = models.CharField(max_length=50, blank=True, null=True)
+    model = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'内存型号')
+    slot = models.CharField(max_length=50, blank=True, null=True)
+    sn = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'SN号')
+    type = models.CharField(max_length=50, blank=True, null=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        # return '%s:%s:%s' % (self.asset_uid, self.slot, self.capacity)
+        return self.capacity
+
+    class Meta:
+        verbose_name = 'RAM'
+        verbose_name_plural = "RAM"
+
+        # auto_create_fields = ['sn', 'slot', 'model', 'capacity']
 
 
 class EventLog(models.Model):
@@ -264,3 +270,22 @@ class EventLog(models.Model):
 
     colored_event_type.allow_tags = True
     colored_event_type.short_description = u'事件类型'
+
+
+class UploadObj(models.Model):
+    TYPE = (
+        ('1', 'image'),
+        ('2', 'file'),
+        ('3', 'movie'),
+    )
+    info = models.CharField(max_length=100)
+    path = models.ImageField(upload_to='static/upload')
+    obj_type = models.CharField(max_length=8, choices=TYPE)
+    ctime = models.DateTimeField(auto_now=True)
+    utime = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return self.info
+
+    class Meta:
+        db_table = 'upload_obj'

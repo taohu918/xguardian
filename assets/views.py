@@ -12,6 +12,8 @@ from assets.utilsbox.data_handler import Handler
 import json
 from assets import models
 from assets.utilsbox.log import logger
+from django.views.generic import View
+import logging
 
 
 def mmth(request):
@@ -25,15 +27,17 @@ def mmth(request):
 class ServerReport(APIView):
     @decorations.token_validate
     def post(self, request):
-        # print(self.request) # 逆推
         asset_handler = Handler(request)
-        asset_handler.data_is_valid()
-        asset_handler.data_incorporated()
-        if asset_handler.add_successful:
+        try:
+            asset_handler.data_is_valid()
+            asset_handler.data_incorporated()
+        except Exception as e:
+            logging.exception(e)
+
+        if asset_handler.successful:
             msg = json.dumps({'asset_uid': asset_handler.asset_uid})
         else:
             msg = json.dumps({'asset_uid': False})
-
-        logger.info(asset_handler.response)
-        # print('ServerReport.port', asset_handler.response)
+        print(msg)
+        print(asset_handler.asset_uid)
         return HttpResponse(msg)

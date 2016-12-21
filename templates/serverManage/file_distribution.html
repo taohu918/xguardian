@@ -1,0 +1,122 @@
+{% extends 'index.html' %}
+
+{% block css %}
+    <link rel="stylesheet" href="/static/bootstrap_plugin/bootstrap-select.css">
+    <link rel="stylesheet" href="/static/bootstrap_plugin/fileinput.css"/>
+{% endblock %}
+
+{% block content %}
+    <div style="margin-top: 33px;">
+
+        <div class="col-sm-9" style="min-height: 500px;">
+
+            <div><h3 style="font-weight: bold">批量文件上传</h3></div>
+
+            <div class="row margin_top">
+                <label for="target_host" class="col-xs-2 control-label margin_top">目标主机</label>
+
+                <div class="col-xs-8">
+                    <input type="text" id="target_host" name="target_host" class="form-control"
+                           placeholder="多台以 ',' 分割:  结尾不要添加 ','">
+                </div>
+            </div>
+
+            <div class="row margin_top">
+                <label for="target_path" class="col-xs-2 control-label margin_top">目标路径</label>
+
+                <div class="col-xs-8">
+                    <input type="text" id="target_path" name="target_path" class="form-control" placeholder="目标主机的目录">
+                </div>
+            </div>
+
+            <div class="row margin_top">
+                <label for="source_file" class="col-xs-2 control-label margin_top">本地文件</label>
+
+                <div class="col-xs-8">
+                    <input type="text" id="source_file" name="source_file" class="form-control"
+                           placeholder="要分发的文件, 若没有则上传">
+                </div>
+            </div>
+
+            <div class="row margin_top">
+                <label for="file" class="col-xs-2 control-label margin_top">选择文件</label>
+
+                <div class="col-xs-6">
+                    <input type="file" id="file-obj" class="file" multiple data-min-file-count="1">
+                    <span style="color: red;">{{ err_msg }}</span>
+                </div>
+                <div class="col-xs-2">
+                    <button id="UploadObj" type="submit" class="btn btn-primary pull-right">Submit</button>
+                </div>
+            </div>
+
+            <div class="col-xs-10" style="margin-top: 15px;">
+                <pre id="distribution_answer" class="answer_area" style="height: 260px;"></pre>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="/static/bootstrap_plugin/bootstrap-select.js"></script>
+    <script src="/static/bootstrap_plugin/fileinput.js"></script>
+    <script>
+        $(function () {
+            $("#server").removeClass("hiding"); // 展开 menu
+            $("#file_distribution").addClass("sub_item"); // 选中项着色
+        });
+
+        $("#UploadObj").click(function () {
+            var upload_obj = $("#file-obj")[0].files[0];
+            var target_host = $('#target_host').val();
+            var target_path = $('#target_path').val();
+            var source_file = $('#source_file').val();
+
+            if (target_host) {
+                var form = new FormData();
+                form.append("upload_obj", upload_obj);  // 生成一个包含 name & value 的表单元素
+                form.append('target_host', target_host);
+                form.append('target_path', target_path);
+                form.append('source_file', source_file);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/eyes/file_distribution/',
+                    data: form,
+                    cache: false,
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false,  // tell jQuery not to set contentType
+                    success: function (data) {
+                        var msg = 'total' + data;
+                        $('#distribution_answer').text(msg);
+                        for (var i = 0; i < data; i++) {
+                            Get_upload_result();
+                        }
+                    },
+                    error: function (arg) {
+                    }
+                })
+            } else {
+                $('#distribution_answer').text('请输入目标主机IP');
+            }
+        });
+
+        function Get_upload_result() {
+            $.ajax({
+                type: 'GET',
+                url: '/eyes/get_distribution_res/',
+                traditional: true,
+                dataType: "json",
+                success: function (data) {
+                    $('#distribution_answer').append(data);
+                },
+                complete: function () {
+                    // get_command_result();
+                },
+                error: function (error_data) {
+                    // console.log(error_data)
+                }
+            });
+        }
+    </script>
+{% endblock %}

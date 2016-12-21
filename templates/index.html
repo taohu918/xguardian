@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     {% block title %}
@@ -10,11 +10,18 @@
 
     <link rel="stylesheet" href="{% static "css/3rd/bootstrap/bootstrap.css" %}">
     <link rel="stylesheet" href="{% static "css/src/custom.css" %}">
+    <link rel="stylesheet" href="{% static "awesome/css/font-awesome.min.css" %}">
     {% block css %}{% endblock %}
+
+    {% url 'assets' as assets %}
+    {% url 'idcinfo' as idcinfo %}
+    {% url 'lotupload' as lotupload %}
+    {% url 'batch' as batch %}
+    {% url 'file_distribution' as file_distribution %}
 </head>
 
 <body>
-<nav class="navbar navbar-default navbar-fixed-top">
+<nav class="navbar navbar-inverse navbar-default navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="{% url 'index' %}">XCMDB</a>
@@ -45,32 +52,91 @@
 </nav>
 
 {% block pg-container %}
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-2">
-                <ul class="nav nav-pills nav-stacked text-center">
-                    <li><a href="#">用户管理</a></li>
-                    <li><a href="{% url 'assets' %}">资产管理</a></li>
-                    <li><a href="{% url 'modifylog' %}">变更记录</a></li>
-                </ul>
-            </div>
-            <div class="col-md-10 min-height">
-                {% block content %}
-                    <div class="jumbotron">
-                        <h1>Welcome to xcmdb</h1>
-                        <p>...</p>
-                        <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
+    <div class="pg-body">
+        <div class="menu">
+            <ul class="list">
+                <li>
+                    <a href="javascript:;" onclick="show_item(this)"
+                       class="{% if request.path ==  assets or request.path == idcinfo or request.path == lotupload %}
+                        selected_color {% endif %}">
+                        <i class="fa fa-bar-chart"></i>
+                        <span>资产管理</span>
+                    </a>
+                    <div id="assets"
+                         class="sub_list {% if request.path !=  assets and request.path != net_res %} hiding {% endif %}">
+                        <ul class="list-unstyled">
+                            <li>
+                                <a id="assets_info" href="{% url 'assets' %}" {% if request.path == assets %}
+                                   class="sub_item" {% endif %}> 设备信息</a>
+                            </li>
+                            <li>
+                                <a id="idc_info" href="{% url 'idcinfo' %}" {% if request.path == idcinfo %}
+                                   class="sub_item" {% endif %}>机房信息</a>
+                            </li>
+                            <li>
+                                <a id="lotupload" href="{% url 'lotupload' %}" {% if request.path == lotupload %}
+                                   class="sub_item" {% endif %}>批量导入</a>
+                            </li>
+
+                        </ul>
                     </div>
-                {% endblock %}
-            </div>
+                </li>
+
+                <li>
+                    <a href="#" onclick="show_item(this)">
+                        <i class="fa fa-pencil-square-o"></i>
+                        <span>服务管理</span>
+                    </a>
+                    <div id="server"
+                         class="sub_list {% if request.path !=  batch and request.path != net_res %} hiding {% endif %}">
+                        <ul class="list-unstyled">
+                            <li>
+                                <a id="batch" href="{% url 'batch' %}" {% if request.path == batch %}
+                                   class="sub_item" {% endif %}>批量执行</a>
+                            </li>
+                            <li>
+                                <a id="file_distribution" href="{% url 'file_distribution' %}"
+                                        {% if request.path == file_distribution %} class="sub_item" {% endif %}>文件分发</a>
+                            </li>
+                            <li>
+                                <a id="cnf_edit" href="#" {% if request.path == lotupload %}
+                                   class="sub_item" {% endif %}>批量导入</a>
+                            </li>
+
+                        </ul>
+                    </div>
+                </li>
+
+                <li><a href="#">
+                    <i class="fa fa-user-o"></i>
+                    <span>用户管理</span>
+                </a></li>
+
+                <li><a href="{% url 'modifylog' %}">
+                    <i class="fa fa-clone"></i>
+                    <span>变更记录</span>
+                </a></li>
+            </ul>
         </div>
+        <div class="content">
+            {% block content %}
+                <div class="jumbotron" style="padding: 15px;">
+                    <h1>Welcome to xcmdb</h1>
+                    <p>...</p>
+                    <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p>
+                </div>
+            {% endblock %}
+        </div>
+        {#        </div>#}
     </div>
 {% endblock %}
 
 <script src="{% static "js/3rd/jQuery_v2.1.1/jquery-2.1.1.js" %}"></script>
 <script src="{% static "js/3rd/bootstrap/bootstrap.js" %}"></script>
+<script src="{% static "js/src/csrf.js" %}"></script>
 {% block js %}{% endblock %}
 
+<script src="{% static "js/src/menu_list.js" %}"></script>
 <script src="{% static "js/src/scrollTop.js" %}"></script>
 
 </body>
