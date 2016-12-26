@@ -133,7 +133,7 @@ def lotupload(request):
     return render(request, 'upload.html', {'err_msg': err_msg})
 
 
-@login_required
+# @login_required
 def excel_to_db(excel):
     import xlrd
     import MySQLdb
