@@ -104,6 +104,7 @@ class Server(models.Model):
     expired_date = models.DateField(blank=True, null=True, verbose_name='过保日期')
     create_time = models.DateTimeField(blank=True, auto_now_add=True)
     update_time = models.DateTimeField(blank=True, null=True, auto_now=True)
+    secret = models.CharField(max_length=24, blank=True, null=True)
 
     class Meta:
         verbose_name = '服务器'

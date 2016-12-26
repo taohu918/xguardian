@@ -58,7 +58,8 @@ def account_logout(request):
 def assets(request):
     model_obj = models.Server.objects.all()
     data = model_obj
-    return render(request, 'assets.html', {'data': data})
+    role = 'admin'
+    return render(request, 'assets.html', {'data': data, 'role': role})
 
 
 @login_required
@@ -78,6 +79,7 @@ def net_res(request):
     return render(request, 'net_res.html')
 
 
+@login_required
 def get_idc_list(request):
     data = []
     # obj = models.IDC.objects.all().values('area')
@@ -89,6 +91,7 @@ def get_idc_list(request):
     return HttpResponse(json.dumps(data))
 
 
+@login_required
 def get_idc_bw(request):
     data = []
     obj = models.IDC.objects.all()
@@ -97,6 +100,7 @@ def get_idc_bw(request):
     return HttpResponse(json.dumps(data))
 
 
+@login_required
 def lotupload(request):
     import os
     err_msg = ''
@@ -111,6 +115,8 @@ def lotupload(request):
             for line in file_obj.chunks():
                 f.write(line)
             f.close()
+
+            excel_to_db(file_path)
 
             # 保存信息到数据库
             info = request.POST['info']
@@ -127,8 +133,15 @@ def lotupload(request):
     return render(request, 'upload.html', {'err_msg': err_msg})
 
 
+@login_required
 def excel_to_db(excel):
-    pass
+    import xlrd
+    import MySQLdb
+    data = xlrd.open_workbook(excel)
+    table = data.sheets()[0]
+    nrows = table.nrows
+    for i in range(1, nrows):
+        print(table.row_values(i))
 
 
 def batch(request):

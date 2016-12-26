@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/3rd/datatables.min.css">
 {% endblock %}
 
+{% load tags %}
 {% block content %}
     <ol class="breadcrumb">
         <li><a href="{% url 'index' %}">资产管理</a></li>
@@ -21,6 +22,7 @@
             <th>CPU/RAM</th>
             <th>型号</th>
             <th>管理员</th>
+            <th>secret</th>
         </tr>
         </thead>
         <tbody>
@@ -34,6 +36,15 @@
                 <td>{{ i.cpu.logic_count }}核/{{ i.ram_size }}</td>
                 <td>{{ i.model }}</td>
                 <td>{{ i.admin }}</td>
+                <td>
+                    <div id="secret">
+                        <span id="msg_show" class="label label-success">点击查看</span>
+                        <span id="msg_hide" class="label label-info hide">
+                            {{ i | role_auth }}
+{#                            {% if role == 'admin' %} {{ i.secret }} {% else %} 无权查看 {% endif %}#}
+                        </span>
+                    </div>
+                </td>
             </tr>
         {% endfor %}
         </tbody>
@@ -52,5 +63,17 @@
                 "pagingType": "ellipses"
             });
         });
+
+        $('#secret').click(function () {
+            //console.log($('#secret').find('span'));
+            $.each($('#secret').find('span'), function (i, ele) {
+                console.log(ele);
+                if ($(ele).is(":hidden")) {
+                    $(ele).removeClass('hide');
+                } else {
+                    $(ele).addClass('hide');
+                }
+            })
+        })
     </script>
 {% endblock %}

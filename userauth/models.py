@@ -54,6 +54,7 @@ class UserManager(BaseUserManager):
 class UserProfile(AbstractBaseUser):
     email = models.EmailField(max_length=255, unique=True, verbose_name='email address', )
     name = models.CharField(max_length=32, verbose_name=u'username')
+    role = models.ManyToManyField('Role', through='UserRole')
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
@@ -115,3 +116,15 @@ class UserProfile(AbstractBaseUser):
         return self.name
 
     objects = UserManager()
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=16, default='guest')
+
+
+class UserRole(models.Model):
+    userid = models.ForeignKey('UserProfile', db_column='userid')
+    roleid = models.ForeignKey('Role', db_column='roleid')
+
+    class Meta:
+        db_table = 'userauth_user_role'
