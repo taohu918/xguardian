@@ -38,7 +38,7 @@ body {
     color: #00FFFF;
 }
 
-.pg-body .menu .list .sub_item {
+.pg-body .menu .list .sub_item_color_up {
     color: #00FFFF;
 }
 
@@ -52,9 +52,10 @@ body {
     padding: 10px;
 }
 
-.select_color {
-    background: #00FFFF;
-    color: #fff;
+.selected_color {
+    /*background: #00FFFF;*/
+    /*color: #fff;*/
+    color: #fc5;
 }
 
 .hiding {

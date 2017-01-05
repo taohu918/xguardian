@@ -36,7 +36,7 @@
                         <a href="" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
                            aria-expanded="false">{{ request.user.name }} <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="https://www.baidu.com">百度</a></li>
+                            <li><a href="{% url 'changepwd' %}">修改密码</a></li>
                             <li role="separator" class="divider"></li>
                             <li class="dropdown-header">logout</li>
                             <li><a href="{% url 'logout' %}">注销</a></li>
@@ -56,28 +56,26 @@
         <div class="menu">
             <ul class="list">
                 <li>
-                    <a href="javascript:;" onclick="show_item(this)"
-                       class="{% if request.path ==  assets or request.path == idcinfo or request.path == lotupload %}
-                        selected_color {% endif %}">
+                    <a href="#" onclick="show_item(this)">
                         <i class="fa fa-bar-chart"></i>
-                        <span>资产管理</span>
+                        <span {% if request.path == assets or request.path == idcinfo or request.path == lotupload %}
+                            class="selected_color" {% endif %}>资产管理</span>
                     </a>
-                    <div id="assets"
-                         class="sub_list {% if request.path !=  assets and request.path != net_res %} hiding {% endif %}">
+                    <div id="assets" class="sub_list
+                     {% if request.path != assets and request.path != idcinfo and request.path != lotupload %} hiding {% endif %}">
                         <ul class="list-unstyled">
                             <li>
                                 <a id="assets_info" href="{% url 'assets' %}" {% if request.path == assets %}
-                                   class="sub_item" {% endif %}> 设备信息</a>
+                                   class="sub_item_color_up" {% endif %}> 设备信息</a>
                             </li>
                             <li>
                                 <a id="idc_info" href="{% url 'idcinfo' %}" {% if request.path == idcinfo %}
-                                   class="sub_item" {% endif %}>机房信息</a>
+                                   class="sub_item_color_up" {% endif %}>机房信息</a>
                             </li>
                             <li>
                                 <a id="lotupload" href="{% url 'lotupload' %}" {% if request.path == lotupload %}
-                                   class="sub_item" {% endif %}>批量导入</a>
+                                   class="sub_item_color_up" {% endif %}>批量导入</a>
                             </li>
-
                         </ul>
                     </div>
                 </li>
@@ -85,22 +83,24 @@
                 <li>
                     <a href="#" onclick="show_item(this)">
                         <i class="fa fa-pencil-square-o"></i>
-                        <span>服务管理</span>
+                        <span {% if request.path == batch or request.path == file_distribution %}
+                            class="selected_color" {% endif %}>服务管理</span>
                     </a>
                     <div id="server"
-                         class="sub_list {% if request.path !=  batch and request.path != net_res %} hiding {% endif %}">
+                         class="sub_list {% if request.path !=  batch and request.path != file_distribution %} hiding {% endif %}">
                         <ul class="list-unstyled">
                             <li>
                                 <a id="batch" href="{% url 'batch' %}" {% if request.path == batch %}
-                                   class="sub_item" {% endif %}>批量执行</a>
+                                   class="sub_item_color_up" {% endif %}>批量执行</a>
                             </li>
                             <li>
                                 <a id="file_distribution" href="{% url 'file_distribution' %}"
-                                        {% if request.path == file_distribution %} class="sub_item" {% endif %}>文件分发</a>
+                                        {% if request.path == file_distribution %}
+                                   class="sub_item_color_up" {% endif %}>文件分发</a>
                             </li>
                             <li>
                                 <a id="cnf_edit" href="#" {% if request.path == lotupload %}
-                                   class="sub_item" {% endif %}>批量导入</a>
+                                   class="sub_item_color_up" {% endif %}>配置变更</a>
                             </li>
 
                         </ul>

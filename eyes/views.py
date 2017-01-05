@@ -59,7 +59,7 @@ def assets(request):
     model_obj = models.Server.objects.all()
     data = model_obj
     role = 'admin'
-    return render(request, 'assets.html', {'data': data, 'role': role})
+    return render(request, 'assetManage/assets.html', {'data': data, 'role': role})
 
 
 @login_required
@@ -71,12 +71,12 @@ def details(request, uid):
     #     print i
     # o = obj.os_set.get_os_types_choice_display()
     # print(uid, obj, obj.eventlog_set.select_related())
-    return render(request, 'details.html', {'asset': obj})
+    return render(request, 'assetManage/details.html', {'asset': obj})
 
 
 @login_required
 def net_res(request):
-    return render(request, 'net_res.html')
+    return render(request, 'assetManage/net_res.html')
 
 
 @login_required
@@ -130,7 +130,7 @@ def lotupload(request):
         else:
             err_msg = '请选择文件'
 
-    return render(request, 'upload.html', {'err_msg': err_msg})
+    return render(request, 'assetManage/upload.html', {'err_msg': err_msg})
 
 
 # @login_required
@@ -145,7 +145,7 @@ def excel_to_db(excel):
 
 
 def batch(request):
-    return render(request, 'batch_processing.html')
+    return render(request, 'serverManage/batch_processing.html')
 
 
 def post_cmds(request):

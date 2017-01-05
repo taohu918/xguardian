@@ -16,6 +16,9 @@ class UserManager(BaseUserManager):
     def create_user(self, email, name, password=None):
         """
         Creates and saves a User with the given email, name and password.
+        :param email
+        :param name
+        :param password
         """
         if not email:
             raise ValueError('Users must have an email address')
@@ -36,6 +39,9 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, name, password):
         """
         Creates and saves a superuser with the given email, name and password.
+        :param email
+        :param name
+        :param password
         """
         user = self.create_user(
             email,
@@ -72,9 +78,8 @@ class UserProfile(AbstractBaseUser):
     # TODO: used as the unique identifier
     USERNAME_FIELD = 'email'
 
-    # TODO: be prompted for when creating a user via the createsuperuser management command
-    # REQUIRED_FIELDS = ['name','token','department','tel','mobile','memo']
-    REQUIRED_FIELDS = ['name']
+    # TODO: names that will be prompted for when creating a user via the createsuperuser management command.
+    REQUIRED_FIELDS = ['name', 'role', 'token', 'department', 'tel', 'mobile', 'memo']
 
     def get_full_name(self):
         # The user is identified by their email address

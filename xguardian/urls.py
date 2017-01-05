@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^api/', include('assets.urls')),
     url(r'^asset/', include(assets_urls)),
     url(r'eyes/', include('eyes.urls')),
+    url(r'user/', include('userauth.urls')),
     url(r'^$', index),
     url(r'test/$', post_test),
 ]

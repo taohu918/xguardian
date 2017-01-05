@@ -40,6 +40,3 @@ def role_auth(obj):
         return obj.secret
     else:
         return u'无权查看'
-
-    # print(role_list)
-    # return 'hh'
