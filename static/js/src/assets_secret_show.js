@@ -19,7 +19,7 @@
 function secret_show(ths) {
     // alert(ths);
     $.each($(ths).find('span'), function (i, ele) {
-        console.log(ele);
+        // console.log(ele);
         if ($(ele).is(":hidden")) {
             $(ele).removeClass('hide');
         } else {

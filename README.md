@@ -3,8 +3,6 @@
 
 包括批量导入、批量执行、文件分发等功能。
 
-运行前请在 static 目录下自建 upload 目录
-
 # 批量执行：
 ![screenshot](static/images/lotEXE.jpg)
 

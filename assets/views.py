@@ -11,8 +11,6 @@ from assets.utilsbox import decorations
 from assets.utilsbox.data_handler import Handler
 import json
 from assets import models
-from assets.utilsbox.log import logger
-from django.views.generic import View
 import logging
 
 
