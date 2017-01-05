@@ -6,7 +6,6 @@
 # sys.setdefaultencoding("utf-8")
 from __future__ import unicode_literals
 
-# Create your models here.
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone

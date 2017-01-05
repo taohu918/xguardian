@@ -5,7 +5,7 @@
 # reload(sys)
 # sys.setdefaultencoding("utf-8")
 
-from django.conf.urls import url, include
+from django.conf.urls import url
 from userauth import views
 
 urlpatterns = [

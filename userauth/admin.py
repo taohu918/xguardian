@@ -1,4 +1,6 @@
-# Register your models here.
+# -*- coding: utf-8 -*-
+# __author__: taohu
+
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
