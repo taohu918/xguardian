@@ -21,10 +21,11 @@ class ChangepwdForm(forms.Form):
         label=u"新密码",
         error_messages={'required': u'请输入新密码'},
         widget=forms.PasswordInput(
-            attrs={
-                'placeholder': u"新密码",
-            }
+            # attrs={
+            #     'placeholder': u"新密码",
+            # }
         ),
+        min_length=6,
     )
 
     newpassword2 = forms.CharField(
@@ -36,6 +37,7 @@ class ChangepwdForm(forms.Form):
                 'placeholder': u"确认密码",
             }
         ),
+        min_length=6,
     )
 
     def clean(self):

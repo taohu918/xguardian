@@ -7,6 +7,13 @@
         <form class="form-signin" action="{% url 'login' %}" method="post">{% csrf_token %}
             <h2 class="form-signin-heading">Please sign in</h2>
 
+            {% if err_msg %}
+                <div class="alert alert-danger alert-dismissable alert-link">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    Wrong username or password!
+                </div>
+            {% endif %}
+
             <label for="inputUser" class="sr-only">Username</label>
             <input type="text" id="inputUser" name="username"
                    class="form-control" placeholder="Username" required="" autofocus>
@@ -22,7 +29,7 @@
             </div>
 
             <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-            <p style="color:red;">{{ err_msg }}</p>
+{#            <p style="color:red;">{{ err_msg }}</p>#}
         </form>
     </div>
 

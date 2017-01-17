@@ -99,12 +99,14 @@ class Server(models.Model):
     contract = models.ForeignKey('Contract', blank=True, null=True, verbose_name=u'合同')
     admin = models.ForeignKey('userauth.UserProfile', blank=True, null=True, verbose_name=u'管理员')
 
-    mip = models.CharField(max_length=50, blank=True, null=True)
+    ip = models.CharField(max_length=50, blank=True, null=True)
     hosted = models.GenericIPAddressField(blank=True, null=True, verbose_name='虚拟底层')
+    position = models.CharField(max_length=24, blank=True, null=True, verbose_name='机柜位置')
     expired_date = models.DateField(blank=True, null=True, verbose_name='过保日期')
     create_time = models.DateTimeField(blank=True, auto_now_add=True)
     update_time = models.DateTimeField(blank=True, null=True, auto_now=True)
-    secret = models.CharField(max_length=24, blank=True, null=True)
+    loginname = models.CharField(max_length=24, blank=True, null=True)
+    password = models.CharField(max_length=24, blank=True, null=True)
 
     class Meta:
         verbose_name = '服务器'

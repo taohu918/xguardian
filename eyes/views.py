@@ -36,7 +36,8 @@ def index(request):
 
 
 def account_login(request):
-    err_msg = ''
+    err_msg = False
+
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -44,8 +45,9 @@ def account_login(request):
         if user is not None:
             login(request, user)
             return HttpResponseRedirect('/eyes/index/')
+            # return HttpResponseRedirect(request.session['login_from'])
         else:
-            err_msg = "Wrong username or password!"
+            err_msg = True
     return render(request, 'login.html', {'err_msg': err_msg})
 
 
@@ -58,6 +60,8 @@ def account_logout(request):
 def assets(request):
     model_obj = models.Server.objects.all()
     data = model_obj
+    print(request.user.id)
+    data.user_id = request.user.id
     role = 'admin'
     return render(request, 'assetManage/assets.html', {'data': data, 'role': role})
 
@@ -116,13 +120,15 @@ def lotupload(request):
                 f.write(line)
             f.close()
 
-            excel_to_db(file_path)
+            # 把Excel内容导入到资产库
+            # excel_to_db(file_path)
+            mth_obj = ExcelToDB(file_path)
+            mth_obj.excel_to_db()
 
-            # 保存信息到数据库
+            # 保存上传的文件信息到数据库
             info = request.POST['info']
             obj_type = request.POST['type']
             info_dic = {'info': info, 'obj_type': obj_type, 'path': file_path}
-            # print(info_dic)
 
             models.UploadObj.objects.create(**info_dic)
             return HttpResponseRedirect('/eyes/lotupload/')
@@ -133,15 +139,77 @@ def lotupload(request):
     return render(request, 'assetManage/upload.html', {'err_msg': err_msg})
 
 
-# @login_required
-def excel_to_db(excel):
-    import xlrd
-    import MySQLdb
-    data = xlrd.open_workbook(excel)
-    table = data.sheets()[0]
-    nrows = table.nrows
-    for i in range(1, nrows):
-        print(table.row_values(i))
+class ExcelToDB(object):
+    def __init__(self, excel):
+        self.excel = excel
+        self.manufactory = None
+        self.business = None
+        self.idc = None
+
+    def excel_to_db(self):
+        import xlrd
+        data = xlrd.open_workbook(self.excel)
+        table = data.sheets()[0]
+        nrows = table.nrows
+        for i in range(2, nrows):
+            info_list = table.row_values(i)
+
+            data_dic = {
+                'uid': info_list[0] + '_' + info_list[8],
+                'sn': info_list[1],
+                'name': info_list[2],
+                'model': info_list[3],
+                'ram_size': info_list[4],
+                'ip': info_list[8],
+                'hosted': info_list[9],
+                'expired_date': info_list[10],
+                'loginname': info_list[12],
+                'password': info_list[13],
+                'position': info_list[14],
+            }
+            obj = models.Server(**data_dic)
+            obj.save()
+
+            self.manufactory = info_list[5]
+            manufactory_obj = self.check_manufactory()
+            obj.manufactory = manufactory_obj
+
+            self.business = info_list[6]
+            business_obj = self.check_business()
+            obj.business = business_obj
+
+            self.idc = info_list[7]
+            idc_obj = self.check_idc()
+            obj.idc = idc_obj
+
+            obj.save()
+
+    def check_manufactory(self):
+        obj = models.Manufactory.objects.filter(manufactory=self.manufactory)
+        if obj:
+            this_obj = obj[0]
+        else:
+            this_obj = models.Manufactory(manufactory=self.manufactory)
+            this_obj.save()
+        return this_obj
+
+    def check_business(self):
+        obj = models.Business.objects.filter(name=self.business)
+        if obj:
+            this_obj = obj[0]
+        else:
+            this_obj = models.Business(name=self.business)
+            this_obj.save()
+        return this_obj
+
+    def check_idc(self):
+        obj = models.IDC.objects.filter(name=self.idc)
+        if obj:
+            this_obj = obj[0]
+        else:
+            this_obj = models.IDC(name=self.idc)
+            this_obj.save()
+        return this_obj
 
 
 def batch(request):

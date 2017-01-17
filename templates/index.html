@@ -43,7 +43,7 @@
                         </ul>
                     </li>
                 {% else %}
-                    <li><a href="{% url 'login' %}">注册\登录</a></li>
+                    <li><a href="{% url 'login' %}?next={{request.path}}">注册\登录</a></li>
                 {% endif %}
             </ul>
         </div>

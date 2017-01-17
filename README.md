@@ -8,3 +8,6 @@
 
 # 支持 web console
 ![screenshot](static/images/console.jpg)
+
+# 安装环境
+pip install django-bootstrap3

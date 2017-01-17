@@ -15,15 +15,18 @@
     <table id="data_list" class="hover" cellspacing="0" width="100%">
         <thead>
         <tr>
-            <th></th>
+            <th>序号</th>
             <th>资产编号</th>
-            <th>名称</th>
+            <th>主机名</th>
             <th>业务线</th>
-            <th>管理ip</th>
-            <th>CPU/RAM</th>
+            <th>业务IP</th>
             <th>型号</th>
-            <th>管理员</th>
-            <th>secret</th>
+            <th>宿主/管理</th>
+            <th>机柜位置</th>
+            <th>CPU/RAM</th>
+            {#            <th>管理员</th>#}
+            <th>登录名</th>
+            <th>密码</th>
         </tr>
         </thead>
         <tbody>
@@ -33,16 +36,19 @@
                 <td><a href="/eyes/details/{{ i.uid }}/">{{ i.uid }}</a></td>
                 <td>{{ i.name }}</td>
                 <td>{{ i.business.name }}</td>
-                <td>{{ i.mip }}</td>
-                <td>{{ i.cpu.logic_count }}核/{{ i.ram_size }}</td>
+                <td>{{ i.ip }}</td>
                 <td>{{ i.model }}</td>
-                <td>{{ i.admin }}</td>
+                <td>{{ i.hosted }}</td>
+                <td>{{ i.position }}</td>
+                <td>{{ i.cpu.logic_count }}核/{{ i.ram_size }}</td>
+                {#                <td>{{ i.admin }}</td>#}
+                <td>{{ i.loginname }}</td>
                 <td>
                     <div id="secret" onclick="secret_show(this)">
                         <span id="msg_show" class="label label-success">点击查看</span>
                         <span id="msg_hide" class="label label-info hide">
-                            {{ i | role_auth }}
-{#                            {% if role == 'admin' %} {{ i.secret }} {% else %} 无权查看 {% endif %}#}
+                            {{ request | role_auth:i.password }}
+                            <!--{% if role == 'admin' %} {{ i.password }} {% else %} 无权查看 {% endif %}-->
                         </span>
                     </div>
                 </td>
