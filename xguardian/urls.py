@@ -23,7 +23,7 @@ from eyes.views import post_test
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('assets.urls')),
-    url(r'^asset/', include(assets_urls)),
+    url(r'^assets/', include(assets_urls)),
     url(r'eyes/', include('eyes.urls')),
     url(r'user/', include('userauth.urls')),
     url(r'^$', index),

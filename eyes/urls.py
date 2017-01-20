@@ -24,7 +24,9 @@ urlpatterns = [
     url(r'post_cmds/$', views.post_cmds, name='post_cmd'),
     url(r'get_cmds_res/$', views.get_cmds_res, name='get_cmds_res'),
     url(r'file_distribution/$', views.file_distribution, name='file_distribution'),
-    url(r'get_distribution_res', views.get_distribution_res, name='get_distribution_res'),
+    url(r'get_distribution_res/$', views.get_distribution_res, name='get_distribution_res'),
+    # 用户管理
+    url(r'account_manage/', views.account_manage, name='account_manage'),
     # 变更记录
     url(r'modifylog/$', views.modifylog, name='modifylog'),
     url(r'^$', views.index, name='index'),

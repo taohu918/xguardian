@@ -14,5 +14,5 @@ router = routers.DefaultRouter()
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'server/$', views.ServerReport.as_view()),
-    url(r'mmth/$', views.mmth)
+    url(r'mmth/$', views.mmth),
 ]

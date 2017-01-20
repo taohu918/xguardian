@@ -284,6 +284,11 @@ def get_distribution_res(request):
         return HttpResponse('false')
 
 
+@login_required()
+def account_manage(request):
+    return render(request, 'accountManage/account_manage.html')
+
+
 @login_required
 def modifylog(request):
     # uid = request.GET.get('uid')
