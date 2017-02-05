@@ -86,7 +86,6 @@ class Mercurial(object):
             f = urllib.request.urlopen(request, data)
             callback_msg = f.read().decode('utf-8')
             # print(callback_msg)
-
             return callback_msg
 
         elif sys.version.split('.')[0] == '2':
@@ -99,7 +98,6 @@ class Mercurial(object):
             res_data = urllib2.urlopen(req, timeout=settings.Params['request_timeout'])
             callback_msg = res_data.read()
             # print('\033[1;33m %s \033[0m' % __file__, type(callback_msg), callback_msg)
-
             return callback_msg
 
     @staticmethod
