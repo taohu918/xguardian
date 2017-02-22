@@ -50,6 +50,10 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # cache
+    # 'django.middleware.cache.UpdateCacheMiddleware',
+    # 'django.middleware.common.CommonMiddleware',
+    # 'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'xguardian.urls'
@@ -135,3 +139,17 @@ AUTH_USER_MODEL = 'userauth.UserProfile'
 TOKEN_TIMEOUT = 120
 
 LOGIN_URL = '/eyes/login/'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'static/cache'),
+        # "BACKEND": "django_redis.cache.RedisCache",
+        # 'LOCATION': "redis://172.16.81.62:6302",
+        'TIMEOUT': 600,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            # "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}

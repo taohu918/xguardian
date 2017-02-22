@@ -1,6 +1,13 @@
 env
-.idea/**/*
-*.pyc
 
-/assets/logs/*
+.idea
+.idea/**/*
+
+*.pyc
+*/*.pyc
+
+__pycache__
+*/__pycache__
+
+*/logs
 /static/upload/*

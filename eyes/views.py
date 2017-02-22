@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 
 from assets import models
 
@@ -57,13 +58,11 @@ def account_logout(request):
 
 
 @login_required
+@cache_page(60 * 15)
 def assets(request):
-    model_obj = models.Server.objects.all()
-    data = model_obj
-    print(request.user.id)
+    data = models.Server.objects.all()
     data.user_id = request.user.id
-    role = 'admin'
-    return render(request, 'assetManage/assets.html', {'data': data, 'role': role})
+    return render(request, 'assetManage/assets.html', {'data': data})
 
 
 @login_required
@@ -153,6 +152,10 @@ class ExcelToDB(object):
         nrows = table.nrows
         for i in range(2, nrows):
             info_list = table.row_values(i)
+            if info_list[10]:
+                expired_date = info_list[10]
+            else:
+                expired_date = '2016-01-01'
 
             data_dic = {
                 'uid': info_list[0] + '_' + info_list[8],
@@ -162,7 +165,7 @@ class ExcelToDB(object):
                 'ram_size': info_list[4],
                 'ip': info_list[8],
                 'hosted': info_list[9],
-                'expired_date': info_list[10],
+                'expired_date': expired_date,
                 'loginname': info_list[12],
                 'password': info_list[13],
                 'position': info_list[14],
@@ -174,13 +177,16 @@ class ExcelToDB(object):
             manufactory_obj = self.check_manufactory()
             obj.manufactory = manufactory_obj
 
-            self.business = info_list[6]
+            if info_list[6]:
+                self.business = u'%s' % info_list[6]
+            else:
+                self.business = u'未知'
             business_obj = self.check_business()
             obj.business = business_obj
 
-            self.idc = info_list[7]
-            idc_obj = self.check_idc()
-            obj.idc = idc_obj
+            # self.idc = info_list[7]
+            # idc_obj = self.check_idc()
+            # obj.idc = idc_obj
 
             obj.save()
 
