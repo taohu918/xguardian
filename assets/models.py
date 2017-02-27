@@ -29,9 +29,11 @@ class Business(models.Model):
 class IDC(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(unique=True, max_length=50, verbose_name=u'机房名称')
-    area = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在地')
+    city = models.CharField(max_length=64, blank=True, null=True)
+    mark = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在地')
     bandwidth = models.CharField(max_length=50, blank=True, null=True, verbose_name='带宽')
     tel = models.IntegerField(blank=True, null=True, verbose_name='联系电话')
+    type = models.CharField(max_length=32, default='PRO')
 
     def __unicode__(self):
         return self.name

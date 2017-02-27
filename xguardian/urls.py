@@ -17,8 +17,7 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from assets import urls as assets_urls
-from eyes.views import index
-from eyes.views import post_test
+from eyes.views import index, post_test
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

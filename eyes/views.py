@@ -9,9 +9,10 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, cache_control
 
 from assets import models
+from userauth.models import UserProfile
 
 if sys.version.split('.')[0] == '3':
     import queue
@@ -33,7 +34,7 @@ def post_test(request):
 
 @login_required
 def index(request):
-    return render(request, 'index.html', )
+    return render(request, 'index.html')
 
 
 def account_login(request):
@@ -58,11 +59,37 @@ def account_logout(request):
 
 
 @login_required
-@cache_page(60 * 15)
+# @cache_page(60 * 60 * 24)
 def assets(request):
-    data = models.Server.objects.all()
-    data.user_id = request.user.id
+    data = models.Server.objects.filter(idc__type='IDC')
+    # data.user_id = request.user.id
     return render(request, 'assetManage/assets.html', {'data': data})
+
+
+# @cache_control(private=True, max_age=28800)
+# @cache_page(60 * 60 * 24)
+@login_required
+def assets_new(request):
+    print(request.user.email)
+    data = models.Server.objects.all()
+    return render(request, 'assetManage/assets_new.html', {'data': data})
+
+
+@login_required
+def assets_auth(request):
+    asset_uid = request.POST.get('asset_uid')
+    user_id = request.user.id
+
+    role_list = []
+    role_obj = UserProfile.objects.get(id=user_id).userrole_set.all()
+    for role_item in role_obj:
+        role_list.append(role_item.roleid.name)
+
+    if 'admin' in role_list:
+        secret = models.Server.objects.get(uid=asset_uid).password
+        return HttpResponse(json.dumps(secret))
+    else:
+        return HttpResponse(json.dumps('Permission Denied'))
 
 
 @login_required
@@ -75,6 +102,27 @@ def details(request, uid):
     # o = obj.os_set.get_os_types_choice_display()
     # print(uid, obj, obj.eventlog_set.select_related())
     return render(request, 'assetManage/details.html', {'asset': obj})
+
+
+@login_required
+def assets_pro(request):
+    pro_objs = models.IDC.objects.filter(type='PRO')
+    # for i in pro_objs:
+    #     print(i.type)
+    return render(request, 'assetManage/projects.html', {'pro_objs': pro_objs})
+
+
+@login_required()
+def assets_pro_list(request, pro_mark):
+    # 使用__来查询相关连的表里的数据
+    obj = models.Server.objects.filter(idc__mark=pro_mark)
+    return render(request, 'assetManage/assets.html', {'data': obj})
+
+
+@login_required()
+def assets_pro_detail(request, uid):
+    obj = models.Server.objects.get(uid=uid)
+    return render(request, 'assetManage/details.html', )
 
 
 @login_required
@@ -97,7 +145,7 @@ def get_idc_list(request):
 @login_required
 def get_idc_bw(request):
     data = []
-    obj = models.IDC.objects.all()
+    obj = models.IDC.objects.filter(type='IDC')
     for item in obj:
         data.append({'name': item.name, 'value': item.bandwidth.split('Mb')[0]})
     return HttpResponse(json.dumps(data))

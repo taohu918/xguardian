@@ -9,16 +9,24 @@ from django.conf.urls import url, include
 from eyes import views
 
 urlpatterns = [
+    url(r'^$', views.index, name='index'),
+
+    # old line
     url(r'index/$', views.index, name='index'),
     url(r'login/$', views.account_login, name='login'),
     url(r'logout/$', views.account_logout, name='logout'),
-    # 资产管理
+    # 资产管理 menu
     url(r'assets/$', views.assets, name='assets'),
     url(r'details/(.+)/$', views.details, name='details'),  # 加上(), 传入 views 时当做第二参数, 否则视为 url 的字符串
     url(r'idcinfo/$', views.net_res, name='idcinfo'),
     url(r'get_idc_list/$', views.get_idc_list),
     url(r'get_idc_bw/$', views.get_idc_bw),
     url(r'lotupload/$', views.lotupload, name='lotupload'),
+
+    url(r'assets_new/$', views.assets_new, name='assets_new'),
+    url(r'assets_auth/$', views.assets_auth, name='assets_auth'),
+    url(r'assets_pro/$', views.assets_pro, name='assets_pro'),
+    url(r'assets_pro/list/(.+)/$', views.assets_pro_list, name='assets_pro_list'),
     # 服务管理
     url(r'batch/$', views.batch, name='batch'),
     url(r'post_cmds/$', views.post_cmds, name='post_cmd'),
@@ -29,5 +37,5 @@ urlpatterns = [
     url(r'account_manage/', views.account_manage, name='account_manage'),
     # 变更记录
     url(r'modifylog/$', views.modifylog, name='modifylog'),
-    url(r'^$', views.index, name='index'),
+
 ]
