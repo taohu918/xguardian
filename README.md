@@ -3,6 +3,11 @@
 
 包括批量导入、批量执行、文件分发等功能。
 
+# 菜单及部分细节
+![screenshot](static/images/menu.jpg)
+
+![screenshot](static/images/image05.jpg)
+
 # 网页终端
 ![screenshot](static/images/image01.jpg)
 

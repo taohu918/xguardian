@@ -107,14 +107,15 @@ def details(request, uid):
 @login_required
 def assets_pro(request):
     pro_objs = models.IDC.objects.filter(type='PRO')
-    # for i in pro_objs:
-    #     print(i.type)
+    for i in pro_objs:
+        print(i.name, i.city, i.mark, i.type)
     return render(request, 'assetManage/projects.html', {'pro_objs': pro_objs})
 
 
 @login_required()
 def assets_pro_list(request, pro_mark):
     # 使用__来查询相关连的表里的数据
+    print(pro_mark)
     obj = models.Server.objects.filter(idc__mark=pro_mark)
     return render(request, 'assetManage/assets.html', {'data': obj})
 

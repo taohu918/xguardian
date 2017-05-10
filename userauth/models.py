@@ -132,3 +132,11 @@ class UserRole(models.Model):
 
     class Meta:
         db_table = 'userauth_user_role'
+
+
+class Menu(models.Model):
+    name = models.CharField(max_length=16, default='guest')
+
+
+class RoleMenu(models.Model):
+    pass

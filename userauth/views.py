@@ -20,6 +20,7 @@ def changepwd(request):
         form = ChangepwdForm(request.POST)
         if form.is_valid():
             name = request.user
+            # name = request.user.email # python2
             oldpassword = request.POST.get('oldpassword', '')
             user = authenticate(username=name, password=oldpassword)
             if user is not None and user.is_active:
