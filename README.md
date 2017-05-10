@@ -3,10 +3,12 @@
 
 包括批量导入、批量执行、文件分发等功能。
 
-# 菜单及部分细节
+# 菜单
 ![screenshot](static/images/menu.jpg)
 
 ![screenshot](static/images/image05.jpg)
+
+![screenshot](static/images/image06.jpg)
 
 # 网页终端
 ![screenshot](static/images/image01.jpg)
@@ -16,9 +18,3 @@
 
 # 文件分发
 ![screenshot](static/images/image03.jpg)
-
-# 用户管理
-![screenshot](static/images/image04.jpg)
-
-# 安装环境
-pip install django-bootstrap3
